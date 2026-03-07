@@ -1,20 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { RefreshCw, ArrowRight, ArrowDown, Minus, Loader2, FolderOpen, ChevronDown, ChevronUp, X, Lightbulb, Camera, Upload } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { getOnShootRecommendations, compareFrame, Recommendation, FrameCompareResponse } from "@/lib/api"
+import { Loader2, FolderOpen, ChevronDown, ChevronUp, X, Camera, Upload } from "lucide-react"
+import { compareFrame, FrameCompareResponse } from "@/lib/api"
 import { loadSessions, SavedSession } from "@/lib/sessions"
 import type { LivePreShootState } from "@/app/page"
-
-const conditions = [
-  { id: "location",       label: "Location Type",  options: ["Indoor", "Outdoor", "Mixed"],                    default: "Outdoor"      },
-  { id: "time_of_day",    label: "Time of Day",    options: ["Golden Hour", "Midday", "Overcast", "Night"],    default: "Golden Hour"  },
-  { id: "lighting_source",label: "Lighting Source",options: ["Natural", "Tungsten", "Fluorescent", "Mixed"],   default: "Natural"      },
-]
 
 // Expandable card for saved session recommendations
 function ExpandableSessionRec({ rec }: { rec: { label: string; plainEnglish: string; technical: string } }) {
@@ -68,30 +58,7 @@ function DriftMetricRow({ metric }: { metric: FrameCompareResponse["metrics"][0]
   )
 }
 
-// Tips per condition combination
-const CONDITION_TIPS: Record<string, string> = {
-  "Indoor-Golden Hour-Natural":      "Warm window light at golden hour gives beautiful directional light. Position your subject facing the window for a natural key light.",
-  "Indoor-Golden Hour-Tungsten":     "Mixing warm tungsten with golden hour creates a very orange cast. Consider gelling your lights to match or choose one light source only.",
-  "Indoor-Midday-Natural":           "Midday sun through windows creates harsh, unflattering shadows. Diffuse it with a sheer curtain or bounce it off a white wall.",
-  "Indoor-Midday-Tungsten":          "Tungsten lights indoors at midday gives you full control. Close blinds to avoid mixing colour temperatures.",
-  "Indoor-Midday-Fluorescent":       "Fluorescent lights cast a green tint. Add +3 to +5 magenta in your white balance to counteract it.",
-  "Indoor-Overcast-Natural":         "Overcast light through windows is soft and flattering — great for interviews and close-ups. No direct shadows.",
-  "Indoor-Night-Tungsten":           "At night with tungsten, you have complete control over your light. This is where you can be most creative with light placement.",
-  "Indoor-Night-Fluorescent":        "Night fluorescent scenes look clinical and cold. Add a practical warm lamp in the background to add warmth and depth.",
-  "Indoor-Night-Natural":            "No natural light at night indoors — if you see it, it's bleed from outside. Use curtains to block it and rely on practicals.",
-  "Outdoor-Golden Hour-Natural":     "The best light of the day. Keep the sun behind and slightly to the side of your subject. Watch your exposure — it changes fast.",
-  "Outdoor-Midday-Natural":          "Harsh overhead sun creates raccoon eyes. Find open shade or use a diffusion panel. Shoot with sun behind subject and use a reflector.",
-  "Outdoor-Overcast-Natural":        "Overcast is a giant softbox. Colours are muted and shadows are soft — great for skin tones. Perfect for documentary and drama.",
-  "Outdoor-Night-Natural":           "Night outdoors is very dark. Look for practical light sources like streetlamps to use as key lights. Raise ISO and open aperture.",
-  "Outdoor-Night-Tungsten":          "Street and practical tungsten light at night gives a cinematic orange-night look. Lean into it — don't correct it away.",
-  "Mixed-Golden Hour-Mixed":         "Mixed conditions mean mixed colour temperatures. Decide on one dominant source and grade the rest to match in post.",
-  "Mixed-Overcast-Mixed":            "Overcast mixed conditions are forgiving. The soft light evens everything out. Focus on framing and composition.",
-}
 
-function getConditionTip(location: string, time: string, lighting: string): string {
-  const key = `${location}-${time}-${lighting}`
-  return CONDITION_TIPS[key] ?? `Shooting ${location.toLowerCase()} during ${time.toLowerCase()} with ${lighting.toLowerCase()} light. Set your white balance manually to avoid colour drift between shots.`
-}
 
 function LiveRecCard({ rec }: { rec: Recommendation }) {
   const [expanded, setExpanded] = useState(false)
@@ -164,14 +131,11 @@ interface OnShootProps {
   livePreShoot?: LivePreShootState
   jumpToCurrent?: boolean
   onJumpHandled?: () => void
+  sidebarSession?: SavedSession | null
+  onSidebarSessionHandled?: () => void
 }
 
-export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled }: OnShootProps) {
-  const [values, setValues]               = useState({ location: "Outdoor", time_of_day: "Golden Hour", lighting_source: "Natural" })
-  const [loading, setLoading]             = useState(false)
-  const [error, setError]                 = useState<string | null>(null)
-  const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null)
-
+export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled, sidebarSession, onSidebarSessionHandled }: OnShootProps) {
   // Saved session state
   const [sessions, setSessions]           = useState<SavedSession[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(false)
@@ -234,6 +198,15 @@ export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled }: OnShootP
     }
   }, [jumpToCurrent])
 
+  // Load session clicked from sidebar
+  useEffect(() => {
+    if (sidebarSession) {
+      setActiveSession(sidebarSession)
+      setFilterProjectId(sidebarSession.project_id ?? undefined)
+      onSidebarSessionHandled?.()
+    }
+  }, [sidebarSession])
+
   useEffect(() => {
     async function fetchAll() {
       setSessionsLoading(true)
@@ -247,23 +220,6 @@ export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled }: OnShootP
     }
     fetchAll()
   }, [filterProjectId])
-
-  async function handleUpdate() {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await getOnShootRecommendations({
-        location:        values.location,
-        time_of_day:     values.time_of_day,
-        lighting_source: values.lighting_source,
-      })
-      setRecommendations(data.recommendations)
-    } catch (e: any) {
-      setError(e.message || "Something went wrong")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="section-stack">
@@ -551,82 +507,9 @@ export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled }: OnShootP
         </div>
       )}
 
-      {/* Conditions card */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Current Conditions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Selects — stack on mobile, row on sm+ */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {conditions.map((condition) => (
-              <div key={condition.id} className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">{condition.label}</Label>
-                <Select
-                  defaultValue={condition.default}
-                  onValueChange={(val) => setValues((prev) => ({ ...prev, [condition.id]: val }))}
-                >
-                  <SelectTrigger className="bg-secondary border-border h-10 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {condition.options.map((opt) => (
-                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
-          </div>
 
-          <Button
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-11"
-            onClick={handleUpdate}
-            disabled={loading}
-          >
-            {loading
-              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              : <RefreshCw className="w-4 h-4 mr-2" />
-            }
-            Update Recommendations
-          </Button>
 
-          {/* Condition tip */}
-          <div className="flex gap-2 p-3 rounded-lg border border-yellow-400/20 bg-yellow-400/5">
-            <Lightbulb className="w-3.5 h-3.5 text-yellow-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {getConditionTip(values.location, values.time_of_day, values.lighting_source)}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Error */}
-      {error && (
-        <div className="p-3 rounded border border-destructive/30 bg-destructive/10 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      {/* Recommendations */}
-      {recommendations && (
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Live Recommendations</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 p-3">
-            {recommendations.map((rec) => (
-              <LiveRecCard key={rec.parameter} rec={rec} />
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {!recommendations && !loading && (
-        <p className="text-center text-xs text-muted-foreground py-4">
-          Set your conditions and tap Update to get live recommendations
-        </p>
-      )}
     </div>
   )
 }

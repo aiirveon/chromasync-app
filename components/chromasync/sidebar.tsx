@@ -1,29 +1,40 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Camera, Crosshair, Palette, Wifi, LogOut, FolderOpen, Plus, ChevronDown } from "lucide-react"
+import { Camera, Crosshair, Palette, Wifi, LogOut, FolderOpen, Plus, ChevronDown, ChevronRight, Trash2, FileImage } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { loadProjects, createProject, Project } from "@/lib/projects"
+import { loadProjects, createProject, deleteProject, Project } from "@/lib/projects"
+import { loadSessions, deleteSession, SavedSession } from "@/lib/sessions"
 
 interface SidebarProps {
   activeTab: "pre-shoot" | "on-shoot" | "post-correction"
   onTabChange: (tab: "pre-shoot" | "on-shoot" | "post-correction") => void
   userEmail?: string
   onSignOut?: () => void
+  onSessionSelect?: (session: SavedSession) => void
 }
 
 const navItems = [
-  { id: "pre-shoot"       as const, label: "Pre-Shoot",      icon: Camera    },
-  { id: "on-shoot"        as const, label: "On-Shoot",       icon: Crosshair },
-  { id: "post-correction" as const, label: "Post Correction", icon: Palette  },
+  { id: "pre-shoot"       as const, label: "Pre-Shoot",       icon: Camera    },
+  { id: "on-shoot"        as const, label: "On-Shoot",        icon: Crosshair },
+  { id: "post-correction" as const, label: "Post Correction", icon: Palette   },
 ]
 
-export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: SidebarProps) {
-  const [projects, setProjects]         = useState<Project[]>([])
-  const [projectsOpen, setProjectsOpen] = useState(true)
-  const [showNewInput, setShowNewInput] = useState(false)
-  const [newName, setNewName]           = useState("")
-  const [creating, setCreating]         = useState(false)
+type ConfirmTarget =
+  | { type: "session"; id: string; name: string }
+  | { type: "project"; id: string; name: string }
+
+export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessionSelect }: SidebarProps) {
+  const [projects, setProjects]           = useState<Project[]>([])
+  const [projectsOpen, setProjectsOpen]   = useState(true)
+  const [expanded, setExpanded]           = useState<Record<string, boolean>>({})
+  const [sessions, setSessions]           = useState<Record<string, SavedSession[]>>({})
+  const [loadingId, setLoadingId]         = useState<string | null>(null)
+  const [showNewInput, setShowNewInput]   = useState(false)
+  const [newName, setNewName]             = useState("")
+  const [creating, setCreating]           = useState(false)
+  const [confirm, setConfirm]             = useState<ConfirmTarget | null>(null)
+  const [deleting, setDeleting]           = useState(false)
 
   useEffect(() => {
     loadProjects().then(({ projects: p }) => setProjects(p))
@@ -41,13 +52,44 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: Sideba
     setCreating(false)
   }
 
+  async function toggleProject(id: string) {
+    const isOpen = !!expanded[id]
+    setExpanded((prev) => ({ ...prev, [id]: !isOpen }))
+    if (!isOpen && !sessions[id]) {
+      setLoadingId(id)
+      const { sessions: s } = await loadSessions(id)
+      setSessions((prev) => ({ ...prev, [id]: s }))
+      setLoadingId(null)
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm) return
+    setDeleting(true)
+    if (confirm.type === "session") {
+      await deleteSession(confirm.id)
+      setSessions((prev) => {
+        const u = { ...prev }
+        for (const pid of Object.keys(u)) u[pid] = u[pid].filter((s) => s.id !== confirm.id)
+        return u
+      })
+    } else {
+      await deleteProject(confirm.id)
+      setProjects((prev) => prev.filter((p) => p.id !== confirm.id))
+      setSessions((prev) => { const u = { ...prev }; delete u[confirm.id]; return u })
+      setExpanded((prev) => { const u = { ...prev }; delete u[confirm.id]; return u })
+    }
+    setConfirm(null)
+    setDeleting(false)
+  }
+
   return (
     <aside
       className="fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden"
       style={{ width: "var(--sidebar-width)" }}
     >
       {/* Logo */}
-      <div className="p-5 border-b border-sidebar-border">
+      <div className="p-5 border-b border-sidebar-border shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="relative w-8 h-8 shrink-0">
             <svg viewBox="0 0 32 32" className="w-full h-full">
@@ -63,7 +105,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: Sideba
       </div>
 
       {/* Scrollable middle */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
 
         {/* Navigation */}
         <nav className="p-3">
@@ -73,8 +115,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: Sideba
                 <button
                   onClick={() => onTabChange(item.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 rounded text-sm transition-colors",
-                    "touch-target justify-start",
+                    "w-full flex items-center gap-3 px-3 rounded text-sm transition-colors touch-target justify-start",
                     activeTab === item.id
                       ? "bg-accent/10 text-accent"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -88,7 +129,6 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: Sideba
           </ul>
         </nav>
 
-        {/* Divider */}
         <div className="mx-3 border-t border-sidebar-border" />
 
         {/* Projects */}
@@ -105,6 +145,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: Sideba
               <span
                 onClick={(e) => { e.stopPropagation(); setShowNewInput(true); setProjectsOpen(true) }}
                 className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-accent rounded transition-all"
+                title="New project"
               >
                 <Plus className="w-3 h-3" />
               </span>
@@ -114,8 +155,10 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: Sideba
 
           {projectsOpen && (
             <div className="mt-1 space-y-0.5">
+
+              {/* New project input */}
               {showNewInput && (
-                <div className="flex gap-1.5 px-1 mb-2">
+                <div className="flex items-center gap-1.5 px-1 mb-2">
                   <input
                     type="text"
                     value={newName}
@@ -125,19 +168,20 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: Sideba
                       if (e.key === "Escape") { setShowNewInput(false); setNewName("") }
                     }}
                     placeholder="Project name..."
-                    className="flex-1 bg-card border border-border rounded px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50"
+                    className="flex-1 min-w-0 bg-card border border-border rounded px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50"
                     autoFocus
                   />
                   <button
                     onClick={handleCreate}
                     disabled={!newName.trim() || creating}
-                    className="px-2 py-1.5 rounded bg-accent text-accent-foreground text-xs disabled:opacity-50"
+                    className="shrink-0 px-2 py-1.5 rounded bg-accent text-accent-foreground text-xs font-medium disabled:opacity-50 hover:bg-accent/90 transition-colors"
                   >
-                    {creating ? "..." : "Add"}
+                    {creating ? "…" : "Add"}
                   </button>
                 </div>
               )}
 
+              {/* Empty state */}
               {projects.length === 0 && !showNewInput && (
                 <button
                   onClick={() => setShowNewInput(true)}
@@ -147,18 +191,59 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: Sideba
                 </button>
               )}
 
+              {/* Project rows */}
               {projects.map((project) => (
-                <button
-                  key={project.id}
-                  onClick={() => onTabChange("on-shoot")}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors text-left"
-                >
-                  <FolderOpen className="w-3.5 h-3.5 shrink-0 text-accent/50" />
-                  <span className="truncate">{project.name}</span>
-                </button>
+                <div key={project.id}>
+                  <div className="flex items-center group/proj rounded hover:bg-secondary transition-colors">
+                    <button
+                      onClick={() => toggleProject(project.id)}
+                      className="flex-1 flex items-center gap-1.5 px-2 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors text-left min-w-0"
+                    >
+                      <ChevronRight className={`w-3 h-3 shrink-0 text-muted-foreground/40 transition-transform ${expanded[project.id] ? "rotate-90" : ""}`} />
+                      <FolderOpen className="w-3.5 h-3.5 shrink-0 text-accent/50" />
+                      <span className="truncate">{project.name}</span>
+                      {loadingId === project.id && <span className="ml-auto text-muted-foreground/40">…</span>}
+                    </button>
+                    <button
+                      onClick={() => setConfirm({ type: "project", id: project.id, name: project.name })}
+                      className="opacity-0 group-hover/proj:opacity-100 p-1.5 mr-1 shrink-0 text-muted-foreground/40 hover:text-red-400 transition-all"
+                      title="Delete project"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  {/* Sessions */}
+                  {expanded[project.id] && (
+                    <div className="ml-4 border-l border-border/30 pl-2 space-y-0.5 mt-0.5 mb-1">
+                      {(sessions[project.id] ?? []).length === 0 && loadingId !== project.id && (
+                        <p className="px-2 py-1.5 text-xs text-muted-foreground/30 italic">No saved looks</p>
+                      )}
+                      {(sessions[project.id] ?? []).map((session) => (
+                        <div key={session.id} className="flex items-center group/sess rounded hover:bg-secondary transition-colors">
+                          <button
+                            onClick={() => { onSessionSelect?.(session); onTabChange("on-shoot") }}
+                            className="flex-1 flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors text-left min-w-0"
+                          >
+                            <FileImage className="w-3 h-3 shrink-0 text-muted-foreground/30" />
+                            <span className="truncate">{session.name}</span>
+                          </button>
+                          <button
+                            onClick={() => setConfirm({ type: "session", id: session.id, name: session.name })}
+                            className="opacity-0 group-hover/sess:opacity-100 p-1.5 mr-1 shrink-0 text-muted-foreground/40 hover:text-red-400 transition-all"
+                            title="Delete look"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
 
-              {projects.length > 0 && (
+              {/* New project footer button */}
+              {projects.length > 0 && !showNewInput && (
                 <button
                   onClick={() => setShowNewInput(true)}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors mt-1"
@@ -169,11 +254,40 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: Sideba
             </div>
           )}
         </div>
+      </div>
 
-      </div> {/* end scrollable */}
+      {/* Delete confirmation overlay */}
+      {confirm && (
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-end z-50 p-4">
+          <div className="w-full bg-card border border-border rounded-lg p-4 space-y-3 shadow-xl">
+            <p className="text-sm font-medium text-foreground">Delete {confirm.type}?</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {confirm.type === "project"
+                ? `"${confirm.name}" and all its saved looks will be permanently deleted.`
+                : `"${confirm.name}" will be permanently deleted.`}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirm(null)}
+                disabled={deleting}
+                className="flex-1 px-3 py-2 rounded border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 px-3 py-2 rounded bg-red-500/20 border border-red-500/30 text-xs text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* User + API Status */}
-      <div className="p-4 border-t border-sidebar-border space-y-3">
+      {/* User + status */}
+      <div className="p-4 border-t border-sidebar-border space-y-3 shrink-0">
         {userEmail && (
           <div className="space-y-2">
             <span className="block text-xs text-muted-foreground truncate">{userEmail}</span>

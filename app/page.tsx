@@ -11,6 +11,7 @@ import { OnShoot } from "@/components/chromasync/on-shoot"
 import { PostCorrection } from "@/components/chromasync/post-correction"
 import { StatusBar } from "@/components/chromasync/status-bar"
 import { PreShootResponse } from "@/lib/api"
+import { SavedSession } from "@/lib/sessions"
 
 export interface LivePreShootState {
   preview: string | null
@@ -32,7 +33,8 @@ export default function Home() {
   const [activeTab, setActiveTab]       = useState<TabType>("pre-shoot")
   const [user, setUser]                 = useState<{ email?: string } | null>(null)
   const [authLoading, setAuthLoading]   = useState(true)
-  const [jumpToCurrent, setJumpToCurrent] = useState(false)
+  const [jumpToCurrent, setJumpToCurrent]   = useState(false)
+  const [sidebarSession, setSidebarSession] = useState<SavedSession | null>(null)
   const [livePreShoot, setLivePreShoot] = useState<LivePreShootState>({
     preview: null, result: null, cameraName: null, recommendations: null, sceneAnalysis: null,
   })
@@ -72,6 +74,7 @@ export default function Home() {
           onTabChange={setActiveTab}
           userEmail={user?.email}
           onSignOut={handleSignOut}
+          onSessionSelect={(s) => { setSidebarSession(s); setActiveTab("on-shoot") }}
         />
       </div>
       <div className="mobile-only">
@@ -81,7 +84,7 @@ export default function Home() {
         <div className="content-wrapper">
           <div className="section-stack">
             <div className={activeTab === "pre-shoot"       ? "block" : "hidden"}><PreShoot onTabChange={setActiveTab} onLiveStateChange={setLivePreShoot} onGoToOnShoot={() => { setJumpToCurrent(true); setActiveTab("on-shoot") }} /></div>
-            <div className={activeTab === "on-shoot"        ? "block" : "hidden"}><OnShoot livePreShoot={livePreShoot} jumpToCurrent={jumpToCurrent} onJumpHandled={() => setJumpToCurrent(false)} /></div>
+            <div className={activeTab === "on-shoot"        ? "block" : "hidden"}><OnShoot livePreShoot={livePreShoot} jumpToCurrent={jumpToCurrent} onJumpHandled={() => setJumpToCurrent(false)} sidebarSession={sidebarSession} onSidebarSessionHandled={() => setSidebarSession(null)} /></div>
             <div className={activeTab === "post-correction" ? "block" : "hidden"}><PostCorrection /></div>
           </div>
         </div>
