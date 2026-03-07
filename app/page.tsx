@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import { Sidebar } from "@/components/chromasync/sidebar"
+import { MobileHeader } from "@/components/chromasync/mobile-header"
+import { MobileBottomNav } from "@/components/chromasync/mobile-bottom-nav"
 import { PreShoot } from "@/components/chromasync/pre-shoot"
 import { OnShoot } from "@/components/chromasync/on-shoot"
 import { PostCorrection } from "@/components/chromasync/post-correction"
 import { StatusBar } from "@/components/chromasync/status-bar"
-import { BreadcrumbNav } from "@/components/chromasync/breadcrumb-nav"
 
 type TabType = "pre-shoot" | "on-shoot" | "post-correction"
 
@@ -20,25 +21,39 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("pre-shoot")
 
   return (
-    <div className="min-h-screen bg-background film-grain">
-      {/* Sidebar */}
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className="app-shell film-grain">
 
-      {/* Main Content */}
-      <main className="ml-[220px] min-h-screen pb-10">
-        <div className="max-w-5xl mx-auto px-6 py-6">
-          {/* Breadcrumb */}
-          <BreadcrumbNav currentModule={tabLabels[activeTab]} />
+      {/* Desktop sidebar — hidden on mobile via CSS class */}
+      <div className="desktop-only">
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
 
-          {/* Page Content */}
-          {activeTab === "pre-shoot" && <PreShoot />}
-          {activeTab === "on-shoot" && <OnShoot />}
-          {activeTab === "post-correction" && <PostCorrection />}
+      {/* Mobile top header — hidden on desktop via CSS class */}
+      <div className="mobile-only">
+        <MobileHeader currentModule={tabLabels[activeTab]} />
+      </div>
+
+      {/* Main scrollable content */}
+      <main className="main-content">
+        <div className="content-wrapper">
+          <div className="section-stack">
+            {activeTab === "pre-shoot"      && <PreShoot />}
+            {activeTab === "on-shoot"       && <OnShoot />}
+            {activeTab === "post-correction" && <PostCorrection />}
+          </div>
         </div>
       </main>
 
-      {/* Status Bar */}
-      <StatusBar processingState="Ready" />
+      {/* Desktop status bar — hidden on mobile via CSS class */}
+      <div className="desktop-only">
+        <StatusBar processingState="Ready" />
+      </div>
+
+      {/* Mobile bottom nav — hidden on desktop via CSS class */}
+      <div className="mobile-only">
+        <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
+
     </div>
   )
 }

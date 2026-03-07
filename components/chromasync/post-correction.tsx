@@ -10,20 +10,20 @@ import { analyseFootage, PostCorrectionResponse } from "@/lib/api"
 function getStatusBadge(status: string) {
   switch (status) {
     case "Corrected":
-      return <Badge className="bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20">{status}</Badge>
+      return <Badge className="badge-corrected border">{status}</Badge>
     case "Needs Review":
-      return <Badge className="bg-accent/10 text-accent border-accent/20">{status}</Badge>
+      return <Badge className="badge-needs-review border">{status}</Badge>
     case "Accepted":
-      return <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20">{status}</Badge>
+      return <Badge className="badge-accepted border">{status}</Badge>
     default:
       return <Badge variant="secondary">{status}</Badge>
   }
 }
 
 function getDeltaColor(delta: number) {
-  if (delta < 2.0) return "text-[#22c55e]"
-  if (delta < 5.0) return "text-yellow-500"
-  return "text-accent"
+  if (delta < 2.0) return "drift-good"
+  if (delta < 5.0) return "drift-warn"
+  return "drift-bad"
 }
 
 export function PostCorrection() {
@@ -65,10 +65,10 @@ export function PostCorrection() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="section-stack">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Post Correction</h1>
-        <p className="text-muted-foreground mt-1">Detect and correct colour drift in your footage</p>
+        <h1 className="text-xl md:text-2xl font-semibold text-foreground">Post Correction</h1>
+        <p className="text-muted-foreground mt-1 text-sm">Detect and correct colour drift in your footage</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -150,7 +150,9 @@ export function PostCorrection() {
               <CardTitle className="text-base font-medium">Scene Analysis</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-border">
+              {/* Horizontal scroll on mobile for the data table */}
+              <div className="overflow-x-auto">
+              <div className="divide-y divide-border min-w-[480px]">
                 <div className="grid grid-cols-6 gap-4 px-4 py-2 text-xs text-muted-foreground bg-secondary/50">
                   <div>Scene</div><div>Name</div><div>Temp</div><div>Exposure</div><div>ΔE Drift</div><div>Status</div>
                 </div>
@@ -165,6 +167,7 @@ export function PostCorrection() {
                   </div>
                 ))}
               </div>
+            </div>
             </CardContent>
           </Card>
 

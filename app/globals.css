@@ -3,112 +3,306 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ChromaSync Dark Theme - Video Editing Tool Aesthetic */
+/* ============================================================
+   CHROMASYNC DESIGN SYSTEM — SINGLE SOURCE OF TRUTH
+   All visual and layout decisions live here.
+   Components consume tokens only — no hardcoded values.
+   ============================================================ */
+
 :root {
-  /* Base colors - dark video editor style */
-  --background: #0f0f0f;
-  --foreground: #f0f0f0;
-  --card: #1e1e1e;
-  --card-foreground: #f0f0f0;
-  --popover: #1e1e1e;
-  --popover-foreground: #f0f0f0;
-  --primary: #f97316;
-  --primary-foreground: #0f0f0f;
-  --secondary: #252525;
-  --secondary-foreground: #f0f0f0;
-  --muted: #1a1a1a;
-  --muted-foreground: #888888;
-  --accent: #f97316;
-  --accent-foreground: #0f0f0f;
-  --destructive: #ef4444;
-  --destructive-foreground: #f0f0f0;
-  --success: #22c55e;
-  --border: #2e2e2e;
-  --input: #252525;
-  --ring: #f97316;
-  --chart-1: #f97316;
-  --chart-2: #22c55e;
-  --chart-3: #3b82f6;
-  --chart-4: #eab308;
-  --chart-5: #8b5cf6;
-  --radius: 0.375rem;
-  --sidebar: #1a1a1a;
-  --sidebar-foreground: #f0f0f0;
-  --sidebar-primary: #f97316;
+
+  /* ----------------------------------------------------------
+     1. COLOUR TOKENS
+     Change a value here → entire app updates automatically.
+     ---------------------------------------------------------- */
+
+  /* Surfaces */
+  --background:          #0f0f0f;
+  --foreground:          #f0f0f0;
+  --card:                #1e1e1e;
+  --card-foreground:     #f0f0f0;
+  --popover:             #1e1e1e;
+  --popover-foreground:  #f0f0f0;
+
+  /* Brand */
+  --primary:             #f97316;
+  --primary-foreground:  #0f0f0f;
+  --accent:              #f97316;
+  --accent-foreground:   #0f0f0f;
+
+  /* Neutrals */
+  --secondary:           #252525;
+  --secondary-foreground:#f0f0f0;
+  --muted:               #1a1a1a;
+  --muted-foreground:    #888888;
+
+  /* Semantic status — ALL status colours live here */
+  --destructive:             #ef4444;
+  --destructive-foreground:  #f0f0f0;
+  --success:                 #22c55e;
+  --success-foreground:      #0f0f0f;
+  --warning:                 #eab308;
+  --warning-foreground:      #0f0f0f;
+  --info:                    #3b82f6;
+  --info-foreground:         #f0f0f0;
+
+  /* Structural */
+  --border:              #2e2e2e;
+  --input:               #252525;
+  --ring:                #f97316;
+
+  /* Charts */
+  --chart-1:             #f97316;
+  --chart-2:             #22c55e;
+  --chart-3:             #3b82f6;
+  --chart-4:             #eab308;
+  --chart-5:             #8b5cf6;
+
+  /* Shape */
+  --radius:              0.375rem;
+
+  /* ----------------------------------------------------------
+     2. SIDEBAR / NAV TOKENS
+     ---------------------------------------------------------- */
+  --sidebar:                    #1a1a1a;
+  --sidebar-foreground:         #f0f0f0;
+  --sidebar-primary:            #f97316;
   --sidebar-primary-foreground: #0f0f0f;
-  --sidebar-accent: #252525;
-  --sidebar-accent-foreground: #f0f0f0;
-  --sidebar-border: #2e2e2e;
-  --sidebar-ring: #f97316;
+  --sidebar-accent:             #252525;
+  --sidebar-accent-foreground:  #f0f0f0;
+  --sidebar-border:             #2e2e2e;
+  --sidebar-ring:               #f97316;
+
+  /* ----------------------------------------------------------
+     3. LAYOUT TOKENS — SINGLE SOURCE FOR RESPONSIVENESS
+     All widths, heights, and spacing live here.
+     Components reference these instead of hardcoded px values.
+     ---------------------------------------------------------- */
+
+  /* Sidebar width (desktop only) */
+  --sidebar-width:         220px;
+
+  /* Bottom nav height (mobile only) */
+  --bottom-nav-height:     64px;
+
+  /* Status bar height (desktop only) */
+  --status-bar-height:     28px;
+
+  /* Content padding */
+  --content-padding-x:     1rem;
+  --content-padding-y:     1.25rem;
+
+  /* Max readable width */
+  --content-max-width:     56rem;
+
+  /* Minimum touch target size (WCAG AA) */
+  --touch-target:          44px;
+
+  /* Consistent gap between sections */
+  --section-gap:           1.25rem;
+
+  /* Mobile top header height */
+  --mobile-header-height:  52px;
 }
 
 @theme inline {
+
+  /* Typography */
   --font-sans: 'Geist', 'Geist Fallback';
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
+
+  /* Surfaces */
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-popover:              var(--popover);
+  --color-popover-foreground:   var(--popover-foreground);
+
+  /* Brand */
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+
+  /* Neutrals */
+  --color-secondary:            var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+
+  /* Semantic status — now first-class Tailwind utilities */
+  --color-destructive:              var(--destructive);
+  --color-destructive-foreground:   var(--destructive-foreground);
+  --color-success:                  var(--success);
+  --color-success-foreground:       var(--success-foreground);
+  --color-warning:                  var(--warning);
+  --color-warning-foreground:       var(--warning-foreground);
+  --color-info:                     var(--info);
+  --color-info-foreground:          var(--info-foreground);
+
+  /* Structural */
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-ring:                 var(--ring);
+
+  /* Charts */
+  --color-chart-1:              var(--chart-1);
+  --color-chart-2:              var(--chart-2);
+  --color-chart-3:              var(--chart-3);
+  --color-chart-4:              var(--chart-4);
+  --color-chart-5:              var(--chart-5);
+
+  /* Border radius scale */
+  --radius-sm:   calc(var(--radius) - 4px);
+  --radius-md:   calc(var(--radius) - 2px);
+  --radius-lg:   var(--radius);
+  --radius-xl:   calc(var(--radius) + 4px);
+
+  /* Sidebar */
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
 }
 
+/* ----------------------------------------------------------
+   4. BASE LAYER
+   ---------------------------------------------------------- */
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    overscroll-behavior: none;
   }
 }
 
-/* Film grain texture overlay */
-.film-grain {
-  position: relative;
-}
+/* ----------------------------------------------------------
+   5. UTILITY CLASSES
+   Shared visual patterns used across multiple components.
+   ---------------------------------------------------------- */
 
+/* Film grain */
 .film-grain::before {
   content: '';
-  position: absolute;
+  position: fixed;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   opacity: 0.03;
   pointer-events: none;
-  z-index: 0;
+  z-index: 50;
 }
 
-/* Monospace for numerical values */
+/* Monospace numeric display */
 .mono-value {
-  font-family: var(--font-mono), 'Geist Mono', monospace;
+  font-family: var(--font-mono), monospace;
   font-variant-numeric: tabular-nums;
+}
+
+/* Touch target (WCAG AA minimum) */
+.touch-target {
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ΔE drift quality — semantic, not hardcoded */
+.drift-good { color: var(--success); }
+.drift-warn { color: var(--warning); }
+.drift-bad  { color: var(--accent);  }
+
+/* Scene status badges */
+.badge-corrected {
+  background-color: color-mix(in srgb, var(--success) 10%, transparent);
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 20%, transparent);
+}
+.badge-needs-review {
+  background-color: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.badge-accepted {
+  background-color: color-mix(in srgb, var(--info) 10%, transparent);
+  color: var(--info);
+  border-color: color-mix(in srgb, var(--info) 20%, transparent);
+}
+
+/* Direction delta pills — on-shoot & post-correction */
+.delta-up   { background-color: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); }
+.delta-down { background-color: color-mix(in srgb, var(--info)   10%, transparent); color: var(--info);   }
+.delta-flat { background-color: var(--muted); color: var(--muted-foreground); }
+
+/* ----------------------------------------------------------
+   6. LAYOUT CLASSES — consume layout tokens from :root
+   ---------------------------------------------------------- */
+
+/* Root app shell */
+.app-shell {
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* Main content area — mobile default */
+.main-content {
+  min-height: 100dvh;
+  margin-left: 0;
+  padding-top: var(--mobile-header-height);
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+}
+
+/* Visibility helpers
+   Uses 'block' not 'flex' — wrappers must not become accidental flex containers.
+   Sidebar and MobileHeader/BottomNav components define their own display internally. */
+.desktop-only { display: none  !important; }
+.mobile-only  { display: block !important; }
+
+/* Desktop overrides */
+@media (min-width: 768px) {
+  .main-content {
+    margin-left: var(--sidebar-width);
+    padding-top: 0;
+    padding-bottom: var(--status-bar-height);
+  }
+  .desktop-only { display: block !important; }
+  .mobile-only  { display: none  !important; }
+}
+
+/* Inner content wrapper */
+.content-wrapper {
+  max-width: var(--content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding: var(--content-padding-y) var(--content-padding-x);
+}
+
+@media (min-width: 768px) {
+  .content-wrapper {
+    padding: 1.5rem 2rem;
+  }
+}
+
+/* Consistent vertical section spacing */
+.section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
 }
