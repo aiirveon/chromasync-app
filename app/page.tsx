@@ -10,6 +10,15 @@ import { PreShoot } from "@/components/chromasync/pre-shoot"
 import { OnShoot } from "@/components/chromasync/on-shoot"
 import { PostCorrection } from "@/components/chromasync/post-correction"
 import { StatusBar } from "@/components/chromasync/status-bar"
+import { PreShootResponse } from "@/lib/api"
+
+export interface LivePreShootState {
+  preview: string | null
+  result: PreShootResponse | null
+  cameraName: string | null
+  recommendations: Array<{ label: string; plainEnglish: string; technical: string }> | null
+  sceneAnalysis: Record<string, string> | null
+}
 
 type TabType = "pre-shoot" | "on-shoot" | "post-correction"
 
@@ -20,9 +29,13 @@ const tabLabels: Record<TabType, string> = {
 }
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabType>("pre-shoot")
-  const [user, setUser] = useState<{ email?: string } | null>(null)
-  const [authLoading, setAuthLoading] = useState(true)
+  const [activeTab, setActiveTab]       = useState<TabType>("pre-shoot")
+  const [user, setUser]                 = useState<{ email?: string } | null>(null)
+  const [authLoading, setAuthLoading]   = useState(true)
+  const [jumpToCurrent, setJumpToCurrent] = useState(false)
+  const [livePreShoot, setLivePreShoot] = useState<LivePreShootState>({
+    preview: null, result: null, cameraName: null, recommendations: null, sceneAnalysis: null,
+  })
   const router = useRouter()
 
   useEffect(() => {
@@ -67,8 +80,8 @@ export default function Home() {
       <main className="main-content">
         <div className="content-wrapper">
           <div className="section-stack">
-            <div className={activeTab === "pre-shoot"       ? "block" : "hidden"}><PreShoot onTabChange={setActiveTab} /></div>
-            <div className={activeTab === "on-shoot"        ? "block" : "hidden"}><OnShoot /></div>
+            <div className={activeTab === "pre-shoot"       ? "block" : "hidden"}><PreShoot onTabChange={setActiveTab} onLiveStateChange={setLivePreShoot} onGoToOnShoot={() => { setJumpToCurrent(true); setActiveTab("on-shoot") }} /></div>
+            <div className={activeTab === "on-shoot"        ? "block" : "hidden"}><OnShoot livePreShoot={livePreShoot} jumpToCurrent={jumpToCurrent} onJumpHandled={() => setJumpToCurrent(false)} /></div>
             <div className={activeTab === "post-correction" ? "block" : "hidden"}><PostCorrection /></div>
           </div>
         </div>

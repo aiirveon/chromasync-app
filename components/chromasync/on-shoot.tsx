@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import { getOnShootRecommendations, Recommendation } from "@/lib/api"
 import { loadSessions, SavedSession } from "@/lib/sessions"
+import type { LivePreShootState } from "@/app/page"
 
 const conditions = [
   { id: "location",       label: "Location Type",  options: ["Indoor", "Outdoor", "Mixed"],                    default: "Outdoor"      },
@@ -130,7 +131,13 @@ function DeltaPill({ direction, delta }: { direction: string; delta: string }) {
   )
 }
 
-export function OnShoot() {
+interface OnShootProps {
+  livePreShoot?: LivePreShootState
+  jumpToCurrent?: boolean
+  onJumpHandled?: () => void
+}
+
+export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled }: OnShootProps) {
   const [values, setValues]               = useState({ location: "Outdoor", time_of_day: "Golden Hour", lighting_source: "Natural" })
   const [loading, setLoading]             = useState(false)
   const [error, setError]                 = useState<string | null>(null)
@@ -143,6 +150,15 @@ export function OnShoot() {
   const [showSessionPicker, setShowSessionPicker] = useState(false)
   const [projects, setProjects]           = useState<Array<{id: string; name: string}>>([]) 
   const [filterProjectId, setFilterProjectId] = useState<string | null | undefined>(undefined)
+
+  // Auto-jump to Current tab when navigating from Pre-Shoot via "Go to On-Shoot"
+  useEffect(() => {
+    if (jumpToCurrent && livePreShoot?.result) {
+      setFilterProjectId("__current__")
+      setActiveSession(null)
+      onJumpHandled?.()
+    }
+  }, [jumpToCurrent])
 
   useEffect(() => {
     async function fetchAll() {
@@ -194,35 +210,97 @@ export function OnShoot() {
           )}
         </div>
 
-        {/* Project filter tabs */}
-        {projects.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-2">
-            <button
-              onClick={() => setFilterProjectId(undefined)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterProjectId === undefined ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilterProjectId(null)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterProjectId === null ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
-            >
-              No project
-            </button>
-            {projects.map((p) => (
+        {/* Filter tabs — Current is always shown, projects shown when they exist */}
+        <div className="flex gap-2 flex-wrap mb-2">
+          {/* Current: live unsaved pre-shoot state */}
+          <button
+            onClick={() => { setFilterProjectId("__current__"); setActiveSession(null) }}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              filterProjectId === "__current__"
+                ? "border-accent bg-accent/10 text-accent"
+                : livePreShoot?.result
+                  ? "border-accent/40 text-muted-foreground hover:text-foreground"
+                  : "border-border text-muted-foreground/40 cursor-not-allowed"
+            }`}
+            disabled={!livePreShoot?.result}
+            title={!livePreShoot?.result ? "Upload a frame in Pre-Shoot first" : "Show current unsaved look"}
+          >
+            Current
+          </button>
+
+          {projects.length > 0 && (
+            <>
               <button
-                key={p.id}
-                onClick={() => setFilterProjectId(p.id)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterProjectId === p.id ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setFilterProjectId(undefined)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterProjectId === undefined ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
               >
-                {p.name}
+                All
               </button>
-            ))}
+              {projects.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setFilterProjectId(p.id)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterProjectId === p.id ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
+
+        {/* Current (live pre-shoot) panel */}
+        {filterProjectId === "__current__" && livePreShoot?.result && (
+          <div className="space-y-3">
+            {livePreShoot.preview && (
+              <div className="rounded-lg overflow-hidden border border-accent/30">
+                <img src={livePreShoot.preview} alt="Current frame" className="w-full max-h-40 object-cover opacity-90" />
+                <div className="px-3 py-2 bg-card flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Current frame &middot; <span className="text-accent">unsaved</span></p>
+                  {livePreShoot.cameraName && <p className="text-xs text-muted-foreground">{livePreShoot.cameraName}</p>}
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { label: "Colour Temp", value: livePreShoot.result.colour_profile.colour_temperature_k + "K" },
+                { label: "Exposure",   value: (livePreShoot.result.colour_profile.exposure_ev >= 0 ? "+" : "") + livePreShoot.result.colour_profile.exposure_ev.toFixed(2) + " EV" },
+                { label: "Saturation", value: livePreShoot.result.colour_profile.saturation_pct.toFixed(1) + "%" },
+                { label: "Contrast",   value: livePreShoot.result.colour_profile.contrast_ratio.toFixed(3) + "x" },
+              ].map((m) => (
+                <div key={m.label} className="bg-card border border-accent/20 rounded p-3">
+                  <p className="text-xs text-muted-foreground mb-1">{m.label}</p>
+                  <p className="text-sm font-semibold font-mono text-accent">{m.value}</p>
+                </div>
+              ))}
+            </div>
+            {livePreShoot.sceneAnalysis && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {Object.entries(livePreShoot.sceneAnalysis)
+                  .filter(([k]) => ["shot_type","lighting_feel","colour_mood","suggested_look"].includes(k))
+                  .map(([k, v]) => (
+                    <div key={k} className="bg-card border border-border rounded p-3">
+                      <p className="text-xs text-muted-foreground mb-1 capitalize">{k.replace("_"," ")}</p>
+                      <p className="text-xs text-foreground">{v}</p>
+                    </div>
+                  ))}
+              </div>
+            )}
+            {livePreShoot.recommendations && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Camera settings from current look</p>
+                <div className="space-y-2">
+                  {livePreShoot.recommendations.map((rec) => (
+                    <ExpandableSessionRec key={rec.label} rec={rec} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Session picker */}
-        <div className="relative">
+        {/* Session picker - hidden when on Current tab */}
+        <div className={filterProjectId === "__current__" ? "hidden" : "relative"}>
           <button
             onClick={() => setShowSessionPicker(!showSessionPicker)}
             className="w-full bg-card border border-border rounded-lg px-4 py-3 flex items-center justify-between hover:border-accent/50 transition-colors"
@@ -278,8 +356,8 @@ export function OnShoot() {
           )}
         </div>
 
-        {/* Reference image */}
-        {activeSession?.reference_image_url && (
+        {/* Reference image + session details — only for saved sessions */}
+        {filterProjectId !== "__current__" && activeSession?.reference_image_url && (
           <div className="mt-3 rounded-lg overflow-hidden border border-border">
             <img src={activeSession.reference_image_url} alt={activeSession.name} className="w-full max-h-40 object-cover opacity-90" />
             <div className="px-3 py-2 bg-card">
@@ -288,8 +366,8 @@ export function OnShoot() {
           </div>
         )}
 
-        {/* Active session metrics */}
-        {activeSession && (
+        {/* Active session metrics — only for saved sessions */}
+        {filterProjectId !== "__current__" && activeSession && (
           <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
               { label: "Target Temp",       value: activeSession.colour_temperature_k ? `${activeSession.colour_temperature_k}K` : "—" },
@@ -305,8 +383,7 @@ export function OnShoot() {
           </div>
         )}
 
-        {/* Scene analysis from saved session */}
-        {activeSession?.scene_analysis && (
+        {filterProjectId !== "__current__" && activeSession?.scene_analysis && (
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
             {Object.entries(activeSession.scene_analysis)
               .filter(([key]) => ["shot_type", "lighting_feel", "colour_mood", "suggested_look"].includes(key))
@@ -320,8 +397,7 @@ export function OnShoot() {
           </div>
         )}
 
-        {/* Recommendations from saved session — with expandable technical detail */}
-        {activeSession?.recommendations && (
+        {filterProjectId !== "__current__" && activeSession?.recommendations && (
           <div className="mt-3">
             <p className="text-xs text-muted-foreground mb-2">Camera settings from your saved look</p>
             <div className="space-y-2">

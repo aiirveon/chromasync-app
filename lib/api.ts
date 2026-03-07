@@ -81,7 +81,8 @@ export interface ColourProfile {
 
 export interface CameraSetting {
   value: string
-  explanation: string
+  explanation?: string
+  technical?: string
   label?: string
 }
 

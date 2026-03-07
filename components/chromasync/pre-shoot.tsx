@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Camera, Upload, Loader2, ChevronDown, ChevronUp, Sparkles, Search, Save, CheckCircle, Crosshair } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { analyseReferenceFrame, PreShootResponse } from "@/lib/api"
+import type { LivePreShootState } from "@/app/page"
 import { CAMERAS, Camera as CameraType } from "@/lib/cameras"
 import { saveSession, uploadReferenceImage } from "@/lib/sessions"
 import { loadProjects, createProject, Project } from "@/lib/projects"
@@ -38,9 +39,11 @@ function ExpandableCard({ label, plainEnglish, technical }: { label: string; pla
 
 interface PreShootProps {
   onTabChange?: (tab: "pre-shoot" | "on-shoot" | "post-correction") => void
+  onLiveStateChange?: (state: LivePreShootState) => void
+  onGoToOnShoot?: () => void
 }
 
-export function PreShoot({ onTabChange }: PreShootProps) {
+export function PreShoot({ onTabChange, onLiveStateChange, onGoToOnShoot }: PreShootProps) {
   const [loading, setLoading] = useState(false)
   const [visionLoading, setVisionLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -103,6 +106,14 @@ export function PreShoot({ onTabChange }: PreShootProps) {
       await fetch(`${API_BASE}/ping`).catch(() => {})
       const [data] = await Promise.all([analyseReferenceFrame(file), runVisionAnalysis(file, cameraName)])
       setResult(data)
+      // Lift state up so OnShoot "Current" tab can use it without saving
+      onLiveStateChange?.({
+        preview: URL.createObjectURL(file),
+        result: data,
+        cameraName: selectedCamera?.fullName ?? null,
+        recommendations: null, // will be set after buildRecommendations runs
+        sceneAnalysis: null,   // will be set after vision completes
+      })
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something went wrong. If this is your first upload, the server may be waking up — please try again.")
     } finally { setLoading(false) }
@@ -151,15 +162,31 @@ export function PreShoot({ onTabChange }: PreShootProps) {
       isoNum <= 1600 ? "Moderate light. This ISO should give you a clean image on most cameras." :
       "Low light. You may see some grain — which can look cinematic, but check your footage."
 
-    return [
-      { label: "White Balance",   plainEnglish: wbPlain,      technical: `${settings.white_balance.value} — ${settings.white_balance.explanation}` },
-      { label: "Exposure",        plainEnglish: expPlain,     technical: `${settings.exposure_compensation.value} — ${settings.exposure_compensation.explanation}` },
-      { label: "Picture Profile", plainEnglish: profilePlain, technical: cam ? cam.flatSetting.technical : settings.picture_profile.explanation },
-      { label: "ISO",             plainEnglish: isoPlain,     technical: `ISO ${settings.iso.value} — ${settings.iso.explanation}` },
+    // After buildRecommendations, push the full recs up to parent for OnShoot "Current"
+    const recs = [
+      { label: "White Balance",   plainEnglish: wbPlain,      technical: settings.white_balance.technical ? `${settings.white_balance.value} — ${settings.white_balance.technical}` : settings.white_balance.value },
+      { label: "Exposure",        plainEnglish: expPlain,     technical: settings.exposure_compensation.technical ? `${settings.exposure_compensation.value} — ${settings.exposure_compensation.technical}` : settings.exposure_compensation.value },
+      { label: "Picture Profile", plainEnglish: profilePlain, technical: cam ? cam.flatSetting.technical : "Select your camera above for a specific picture profile suggestion." },
+      { label: "ISO",             plainEnglish: isoPlain,     technical: settings.iso.technical ? `ISO ${settings.iso.value} — ${settings.iso.technical}` : `ISO ${settings.iso.value}` },
     ]
+    return recs
   }
 
   const recommendations = buildRecommendations()
+
+  // Sync full state to parent whenever result, recommendations, or sceneAnalysis changes
+  useEffect(() => {
+    if (!result || !preview) return
+    onLiveStateChange?.({
+      preview,
+      result,
+      cameraName: selectedCamera?.fullName ?? null,
+      recommendations: recommendations.length > 0 ? recommendations : null,
+      sceneAnalysis: sceneAnalysis ? (sceneAnalysis as Record<string, string>) : null,
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, sceneAnalysis, selectedCamera])
+
   async function openSaveModal() {
     setShowSaveModal(true)
     const { projects: loaded } = await loadProjects()
@@ -423,7 +450,7 @@ export function PreShoot({ onTabChange }: PreShootProps) {
             Save this look
           </button>
           <button
-            onClick={() => onTabChange?.("on-shoot")}
+            onClick={() => { onGoToOnShoot?.(); onTabChange?.("on-shoot") }}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/90 transition-colors"
           >
             <Crosshair className="w-4 h-4" />
