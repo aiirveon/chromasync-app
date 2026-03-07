@@ -113,6 +113,8 @@ export interface Recommendation {
   delta: string
   direction: "up" | "down" | "neutral"
   explanation: string
+  technical_detail?: string
+  tip?: string
 }
 
 export interface OnShootResponse {

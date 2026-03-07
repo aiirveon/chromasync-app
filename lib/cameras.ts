@@ -36,6 +36,9 @@ export interface Camera {
   { id: "om-system-om5", brand: "OM System", model: "OM-5", fullName: "OM System OM-5", level: "intermediate", plainEnglishDescription: "Weatherproof compact camera perfect for outdoor and documentary filmmaking. Goes anywhere.", flatSetting: { plainEnglish: "Use 'OM-Log400' for editing flexibility, or 'Flat' picture mode for a neutral starting point", technical: "OM-Log400 or Flat picture mode" }, availableProfiles: ["Natural", "Flat", "OM-Log400", "Vivid"], technicalNotes: "IP53 weather sealing. Up to 7.5 stops image stabilisation." }
 ]
 
+// Sorted alphabetically by fullName
+CAMERAS.sort((a, b) => a.fullName.localeCompare(b.fullName))
+
 export function getCameraById(id: string): Camera | undefined {
   return CAMERAS.find(c => c.id === id)
 }
