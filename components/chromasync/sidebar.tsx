@@ -312,9 +312,8 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
             </div>
           )}
         </div>
-      </div>
-
       </>)}
+      </div>
 
       {/* Delete confirmation overlay */}
       {confirm && (
