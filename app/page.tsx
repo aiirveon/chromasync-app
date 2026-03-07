@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase"
 import { Sidebar } from "@/components/chromasync/sidebar"
 import { MobileHeader } from "@/components/chromasync/mobile-header"
 import { MobileBottomNav } from "@/components/chromasync/mobile-bottom-nav"
@@ -19,41 +21,64 @@ const tabLabels: Record<TabType, string> = {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("pre-shoot")
+  const [user, setUser] = useState<{ email?: string } | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        router.push("/login")
+      } else {
+        setUser(data.user)
+        setAuthLoading(false)
+      }
+    })
+  }, [router])
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
+        <div className="text-[#555] text-sm">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="app-shell film-grain">
-
-      {/* Desktop sidebar — hidden on mobile via CSS class */}
       <div className="desktop-only">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          userEmail={user?.email}
+          onSignOut={handleSignOut}
+        />
       </div>
-
-      {/* Mobile top header — hidden on desktop via CSS class */}
       <div className="mobile-only">
         <MobileHeader currentModule={tabLabels[activeTab]} />
       </div>
-
-      {/* Main scrollable content */}
       <main className="main-content">
         <div className="content-wrapper">
           <div className="section-stack">
-            {activeTab === "pre-shoot"      && <PreShoot />}
-            {activeTab === "on-shoot"       && <OnShoot />}
+            {activeTab === "pre-shoot"       && <PreShoot />}
+            {activeTab === "on-shoot"        && <OnShoot />}
             {activeTab === "post-correction" && <PostCorrection />}
           </div>
         </div>
       </main>
-
-      {/* Desktop status bar — hidden on mobile via CSS class */}
       <div className="desktop-only">
         <StatusBar processingState="Ready" />
       </div>
-
-      {/* Mobile bottom nav — hidden on desktop via CSS class */}
       <div className="mobile-only">
         <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
-
     </div>
   )
 }

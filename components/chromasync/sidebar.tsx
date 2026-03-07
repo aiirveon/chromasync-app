@@ -1,11 +1,13 @@
 "use client"
 
-import { Camera, Crosshair, Palette, Wifi } from "lucide-react"
+import { Camera, Crosshair, Palette, Wifi, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
   activeTab: "pre-shoot" | "on-shoot" | "post-correction"
   onTabChange: (tab: "pre-shoot" | "on-shoot" | "post-correction") => void
+  userEmail?: string
+  onSignOut?: () => void
 }
 
 const navItems = [
@@ -14,7 +16,7 @@ const navItems = [
   { id: "post-correction" as const, label: "Post Correction", icon: Palette  },
 ]
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut }: SidebarProps) {
   return (
     <aside
       className="fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex flex-col"
@@ -24,7 +26,6 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       <div className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5">
           <div className="relative w-8 h-8 shrink-0">
-            {/* SVG uses currentColor / CSS variables — no hardcoded hex */}
             <svg viewBox="0 0 32 32" className="w-full h-full">
               <circle cx="16" cy="16" r="14" fill="none" stroke="var(--accent)" strokeWidth="2" />
               <circle cx="16"  cy="8"  r="3" fill="var(--destructive)" />
@@ -60,8 +61,20 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* API Status */}
-      <div className="p-4 border-t border-sidebar-border">
+      {/* User + API Status */}
+      <div className="p-4 border-t border-sidebar-border space-y-3">
+        {userEmail && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground truncate">{userEmail}</span>
+            <button
+              onClick={onSignOut}
+              className="shrink-0 text-muted-foreground hover:text-red-400 transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <div className="relative">
             <Wifi className="w-3.5 h-3.5 text-success" />
