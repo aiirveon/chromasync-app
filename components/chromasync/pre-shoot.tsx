@@ -236,6 +236,10 @@ export function PreShoot({ onTabChange, onLiveStateChange, onGoToOnShoot }: PreS
       setShowSaveModal(false)
       setSessionName("")
       setSelectedProjectId(null)
+      // Notify sidebar to refresh without page reload
+      window.dispatchEvent(new CustomEvent("chromasync:session-saved", {
+        detail: { project_id: selectedProjectId }
+      }))
     } else {
       setError(`Failed to save: ${saveError}`)
     }

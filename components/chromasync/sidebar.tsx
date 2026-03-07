@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Camera, Crosshair, Palette, Wifi, LogOut, FolderOpen, Plus, ChevronDown, ChevronRight, Trash2, FileImage } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { loadProjects, createProject, deleteProject, Project } from "@/lib/projects"
@@ -28,8 +28,9 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
   const [projects, setProjects]           = useState<Project[]>([])
   const [projectsOpen, setProjectsOpen]   = useState(true)
   const [expanded, setExpanded]           = useState<Record<string, boolean>>({})
-  const [sessions, setSessions]           = useState<Record<string, SavedSession[]>>({})
+  const [cache, setCache]                 = useState<Record<string, SavedSession[]>>({})
   const [loadingId, setLoadingId]         = useState<string | null>(null)
+  const NONE_KEY = "__none__"
   const [showNewInput, setShowNewInput]   = useState(false)
   const [newName, setNewName]             = useState("")
   const [creating, setCreating]           = useState(false)
@@ -38,7 +39,24 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
 
   useEffect(() => {
     loadProjects().then(({ projects: p }) => setProjects(p))
+    loadSessions(null).then(({ sessions: s }) => {
+      setCache((prev) => ({ ...prev, [NONE_KEY]: s }))
+    })
   }, [])
+
+  const handleSessionSaved = useCallback((e: Event) => {
+    const pid: string | null = (e as CustomEvent).detail?.project_id ?? null
+    const key = pid ?? NONE_KEY
+    loadSessions(pid).then(({ sessions: s }) => {
+      setCache((prev) => ({ ...prev, [key]: s }))
+    })
+    if (pid) loadProjects().then(({ projects: p }) => setProjects(p))
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener("chromasync:session-saved", handleSessionSaved)
+    return () => window.removeEventListener("chromasync:session-saved", handleSessionSaved)
+  }, [handleSessionSaved])
 
   async function handleCreate() {
     if (!newName.trim()) return
@@ -52,13 +70,13 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
     setCreating(false)
   }
 
-  async function toggleProject(id: string) {
+  async function toggle(id: string) {
     const isOpen = !!expanded[id]
     setExpanded((prev) => ({ ...prev, [id]: !isOpen }))
-    if (!isOpen && !sessions[id]) {
+    if (!isOpen && !cache[id]) {
       setLoadingId(id)
       const { sessions: s } = await loadSessions(id)
-      setSessions((prev) => ({ ...prev, [id]: s }))
+      setCache((prev) => ({ ...prev, [id]: s }))
       setLoadingId(null)
     }
   }
@@ -68,20 +86,22 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
     setDeleting(true)
     if (confirm.type === "session") {
       await deleteSession(confirm.id)
-      setSessions((prev) => {
+      setCache((prev) => {
         const u = { ...prev }
-        for (const pid of Object.keys(u)) u[pid] = u[pid].filter((s) => s.id !== confirm.id)
+        for (const k of Object.keys(u)) u[k] = u[k].filter((s) => s.id !== confirm.id)
         return u
       })
     } else {
       await deleteProject(confirm.id)
       setProjects((prev) => prev.filter((p) => p.id !== confirm.id))
-      setSessions((prev) => { const u = { ...prev }; delete u[confirm.id]; return u })
+      setCache((prev) => { const u = { ...prev }; delete u[confirm.id]; return u })
       setExpanded((prev) => { const u = { ...prev }; delete u[confirm.id]; return u })
     }
     setConfirm(null)
     setDeleting(false)
   }
+
+  const noneSessions = cache[NONE_KEY] ?? []
 
   return (
     <aside
@@ -182,7 +202,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
               )}
 
               {/* Empty state */}
-              {projects.length === 0 && !showNewInput && (
+              {projects.length === 0 && noneSessions.length === 0 && !showNewInput && (
                 <button
                   onClick={() => setShowNewInput(true)}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-muted-foreground/50 hover:text-muted-foreground border border-dashed border-border/40 hover:border-border transition-colors"
@@ -191,12 +211,37 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
                 </button>
               )}
 
-              {/* Project rows */}
+              {/* Unprojectd sessions — no project_id, shown directly in sidebar */}
+              {noneSessions.map((session) => (
+                <div key={session.id} className="flex items-center group/ns rounded hover:bg-secondary transition-colors">
+                  <button
+                    onClick={() => { onSessionSelect?.(session); onTabChange("on-shoot") }}
+                    className="flex-1 flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors text-left min-w-0"
+                  >
+                    <FileImage className="w-3 h-3 shrink-0 text-muted-foreground/40" />
+                    <span className="truncate">{session.name}</span>
+                  </button>
+                  <button
+                    onClick={() => setConfirm({ type: "session", id: session.id, name: session.name })}
+                    className="opacity-0 group-hover/ns:opacity-100 p-1.5 mr-1 shrink-0 text-muted-foreground/40 hover:text-red-400 transition-all"
+                    title="Delete look"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+
+              {/* Divider if both exist */}
+              {noneSessions.length > 0 && projects.length > 0 && (
+                <div className="border-t border-border/20 my-1" />
+              )}
+
+              {/* Project folders */}
               {projects.map((project) => (
                 <div key={project.id}>
                   <div className="flex items-center group/proj rounded hover:bg-secondary transition-colors">
                     <button
-                      onClick={() => toggleProject(project.id)}
+                      onClick={() => toggle(project.id)}
                       className="flex-1 flex items-center gap-1.5 px-2 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors text-left min-w-0"
                     >
                       <ChevronRight className={`w-3 h-3 shrink-0 text-muted-foreground/40 transition-transform ${expanded[project.id] ? "rotate-90" : ""}`} />
@@ -213,13 +258,13 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
                     </button>
                   </div>
 
-                  {/* Sessions */}
+                  {/* Sessions inside project */}
                   {expanded[project.id] && (
                     <div className="ml-4 border-l border-border/30 pl-2 space-y-0.5 mt-0.5 mb-1">
-                      {(sessions[project.id] ?? []).length === 0 && loadingId !== project.id && (
+                      {(cache[project.id] ?? []).length === 0 && loadingId !== project.id && (
                         <p className="px-2 py-1.5 text-xs text-muted-foreground/30 italic">No saved looks</p>
                       )}
-                      {(sessions[project.id] ?? []).map((session) => (
+                      {(cache[project.id] ?? []).map((session) => (
                         <div key={session.id} className="flex items-center group/sess rounded hover:bg-secondary transition-colors">
                           <button
                             onClick={() => { onSessionSelect?.(session); onTabChange("on-shoot") }}
@@ -243,7 +288,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
               ))}
 
               {/* New project footer button */}
-              {projects.length > 0 && !showNewInput && (
+              {(projects.length > 0 || noneSessions.length > 0) && !showNewInput && (
                 <button
                   onClick={() => setShowNewInput(true)}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors mt-1"
@@ -258,7 +303,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
 
       {/* Delete confirmation overlay */}
       {confirm && (
-        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-end z-50 p-4">
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center z-50 p-5">
           <div className="w-full bg-card border border-border rounded-lg p-4 space-y-3 shadow-xl">
             <p className="text-sm font-medium text-foreground">Delete {confirm.type}?</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
