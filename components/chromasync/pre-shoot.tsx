@@ -81,17 +81,30 @@ export function PreShoot({ onTabChange }: PreShootProps) {
 
   async function handleFile(file: File) {
     setError(null)
+    setSaveSuccess(false)
+
+    const SUPPORTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/tiff", "image/bmp", "image/gif"]
+    const SUPPORTED_EXT  = ["jpg","jpeg","png","webp","avif","tiff","tif","bmp","gif"]
+    const SUPPORTED_LABEL = "JPG, PNG, WebP, AVIF, TIFF, BMP"
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
+
+    if (!SUPPORTED_TYPES.includes(file.type) && !SUPPORTED_EXT.includes(ext)) {
+      setError(`"${file.name}" isn't supported. Please upload one of these formats: ${SUPPORTED_LABEL}`)
+      return
+    }
+
     setPreview(URL.createObjectURL(file))
     setLoading(true)
     setSceneAnalysis(null)
-    setSaveSuccess(false)
     setRawFile(file)
     const cameraName = selectedCamera?.fullName || "Unknown Camera"
     try {
+      // Wake up Render free tier before sending large requests
+      await fetch(`${API_BASE}/ping`).catch(() => {})
       const [data] = await Promise.all([analyseReferenceFrame(file), runVisionAnalysis(file, cameraName)])
       setResult(data)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Something went wrong")
+      setError(e instanceof Error ? e.message : "Something went wrong. If this is your first upload, the server may be waking up — please try again.")
     } finally { setLoading(false) }
   }
 
@@ -311,7 +324,7 @@ export function PreShoot({ onTabChange }: PreShootProps) {
             <p className="text-xs text-muted-foreground">or tap to browse</p>
             <div className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground">
               <Upload className="w-3 h-3" />
-              <span>PNG, JPG, TIFF, WEBP up to 50MB</span>
+              <span>JPG, PNG, WebP, AVIF, TIFF, BMP up to 50MB</span>
             </div>
           </div>
         )}
