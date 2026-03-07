@@ -247,10 +247,11 @@ export function PreShoot({ onTabChange, onLiveStateChange, onGoToOnShoot }: PreS
 
   const hasResults = !!result && !loading
 
+  // Use semantic CSS classes from globals.css — no hardcoded colours
   const levelColour: Record<string, string> = {
-    beginner: "text-green-400 bg-green-400/10 border-green-400/20",
-    intermediate: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
-    pro: "text-purple-400 bg-purple-400/10 border-purple-400/20",
+    beginner:     "level-beginner",
+    intermediate: "level-intermediate",
+    pro:          "level-pro",
   }
 
   return (
@@ -281,7 +282,7 @@ export function PreShoot({ onTabChange, onLiveStateChange, onGoToOnShoot }: PreS
         </div>
 
         {showCameraList && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#1a1a1a] border border-border rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-muted border border-border rounded-lg shadow-xl overflow-hidden">
             <div className="p-2 border-b border-border">
               <div className="flex items-center gap-2 px-2">
                 <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -365,7 +366,7 @@ export function PreShoot({ onTabChange, onLiveStateChange, onGoToOnShoot }: PreS
 
       {/* Save success banner */}
       {saveSuccess && (
-        <div className="flex items-center gap-2 p-3 rounded border border-green-400/30 bg-green-400/5 text-sm text-green-400">
+        <div className="flex items-center gap-2 p-3 rounded border border-success/30 bg-success/5 text-sm text-success">
           <CheckCircle className="w-4 h-4 shrink-0" />
           <span>Look saved! Retrieve it in On-Shoot to match your footage.</span>
           <button onClick={() => onTabChange?.("on-shoot")} className="ml-auto flex items-center gap-1.5 text-xs text-accent hover:underline shrink-0">
@@ -397,8 +398,8 @@ export function PreShoot({ onTabChange, onLiveStateChange, onGoToOnShoot }: PreS
                   </div>
                 ))}
               </div>
-              <div className="mt-3 p-3 rounded-lg border border-yellow-400/20 bg-yellow-400/5">
-                <p className="text-xs text-yellow-400 font-medium mb-1">Tip</p>
+              <div className="mt-3 p-3 rounded-lg border border-warning/20 bg-warning/5">
+                <p className="text-xs text-warning font-medium mb-1">Tip</p>
                 <p className="text-xs text-muted-foreground">{sceneAnalysis.technical_note}</p>
               </div>
               {selectedCamera && (
@@ -471,8 +472,8 @@ export function PreShoot({ onTabChange, onLiveStateChange, onGoToOnShoot }: PreS
 
       {/* Save modal */}
       {showSaveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm bg-[#1a1a1a] border border-border rounded-xl p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-modal-overlay backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-muted border border-border rounded-xl p-6 shadow-2xl">
             <h3 className="text-base font-semibold text-foreground mb-1">Save this look</h3>
             <p className="text-xs text-muted-foreground mb-4">Name it and optionally add it to a project</p>
 

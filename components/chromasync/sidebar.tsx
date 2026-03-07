@@ -128,21 +128,22 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
 
         {/* Navigation */}
-        <nav className="p-3">
-          <ul className="space-y-1">
+        <nav className="px-3 py-2">
+          <ul className="space-y-0.5">
             {navItems.map((item) => (
               <li key={item.id}>
                 <button
                   onClick={() => onTabChange(item.id)}
+                  title={item.label}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 rounded text-sm transition-colors touch-target justify-start",
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
                     activeTab === item.id
                       ? "bg-accent/10 text-accent"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   )}
                 >
-                  <item.icon className="w-4 h-4 shrink-0" />
-                  <span>{item.label}</span>
+                  <item.icon className="w-3.5 h-3.5 shrink-0" />
+                  <span className="text-sm">{item.label}</span>
                 </button>
               </li>
             ))}
@@ -223,7 +224,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
                   </button>
                   <button
                     onClick={() => setConfirm({ type: "session", id: session.id, name: session.name })}
-                    className="opacity-0 group-hover/ns:opacity-100 p-1.5 mr-1 shrink-0 text-muted-foreground/40 hover:text-red-400 transition-all"
+                    className="opacity-0 group-hover/ns:opacity-100 p-1.5 mr-1 shrink-0 text-muted-foreground/40 hover:text-destructive transition-all"
                     title="Delete look"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -251,7 +252,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
                     </button>
                     <button
                       onClick={() => setConfirm({ type: "project", id: project.id, name: project.name })}
-                      className="opacity-0 group-hover/proj:opacity-100 p-1.5 mr-1 shrink-0 text-muted-foreground/40 hover:text-red-400 transition-all"
+                      className="opacity-0 group-hover/proj:opacity-100 p-1.5 mr-1 shrink-0 text-muted-foreground/40 hover:text-destructive transition-all"
                       title="Delete project"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -275,7 +276,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
                           </button>
                           <button
                             onClick={() => setConfirm({ type: "session", id: session.id, name: session.name })}
-                            className="opacity-0 group-hover/sess:opacity-100 p-1.5 mr-1 shrink-0 text-muted-foreground/40 hover:text-red-400 transition-all"
+                            className="opacity-0 group-hover/sess:opacity-100 p-1.5 mr-1 shrink-0 text-muted-foreground/40 hover:text-destructive transition-all"
                             title="Delete look"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -322,7 +323,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex-1 px-3 py-2 rounded bg-red-500/20 border border-red-500/30 text-xs text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                className="flex-1 px-3 py-2 rounded bg-destructive/10 border border-destructive/30 text-xs text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
               >
                 {deleting ? "Deleting…" : "Delete"}
               </button>
@@ -338,7 +339,7 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
             <span className="block text-xs text-muted-foreground truncate">{userEmail}</span>
             <button
               onClick={onSignOut}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-red-400 hover:bg-red-400/10 transition-colors border border-red-400/20 hover:border-red-400/40"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-destructive hover:bg-destructive/10 transition-colors border border-destructive/20 hover:border-destructive/40"
             >
               <LogOut className="w-3.5 h-3.5 shrink-0" />
               <span>Sign out</span>

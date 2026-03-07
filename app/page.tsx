@@ -60,8 +60,8 @@ export default function Home() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
-        <div className="text-[#555] text-sm">Loading...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground/60 text-sm">Loading...</div>
       </div>
     )
   }

@@ -31,9 +31,9 @@ function ExpandableSessionRec({ rec }: { rec: { label: string; plainEnglish: str
 
 // Drift status helpers
 type DriftStatus = "on_target" | "slight" | "significant"
-const STATUS_DOT: Record<DriftStatus, string> = { on_target: "bg-green-500/70", slight: "bg-yellow-400/70", significant: "bg-red-400/70" }
-const STATUS_TEXT: Record<DriftStatus, string> = { on_target: "text-green-400", slight: "text-yellow-400", significant: "text-red-400" }
-const OVERALL_BADGE: Record<string, string> = { on_target: "border-green-500/30 bg-green-500/5 text-green-400", slight: "border-yellow-400/30 bg-yellow-400/5 text-yellow-400", significant: "border-red-400/30 bg-red-400/5 text-red-400" }
+const STATUS_DOT: Record<DriftStatus, string> = { on_target: "bg-success/70", slight: "bg-warning/70", significant: "bg-destructive/70" }
+const STATUS_TEXT: Record<DriftStatus, string> = { on_target: "text-success", slight: "text-warning", significant: "text-destructive" }
+const OVERALL_BADGE: Record<string, string> = { on_target: "border-success/30 bg-success/5 text-success", slight: "border-warning/30 bg-warning/5 text-warning", significant: "border-destructive/30 bg-destructive/5 text-destructive" }
 
 function DriftMetricRow({ metric }: { metric: FrameCompareResponse["metrics"][0] }) {
   const [expanded, setExpanded] = useState(false)
@@ -361,7 +361,7 @@ export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled, sidebarSes
           </button>
 
           {showSessionPicker && sessions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#1a1a1a] border border-border rounded-lg shadow-xl overflow-hidden">
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-muted border border-border rounded-lg shadow-xl overflow-hidden">
               <div className="max-h-56 overflow-y-auto">
                 {sessions.map((session) => (
                   <button

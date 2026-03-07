@@ -58,6 +58,13 @@
   --chart-4:             #eab308;
   --chart-5:             #8b5cf6;
 
+  /* Skill level badges */
+  --pro:                 #8b5cf6;
+  --pro-foreground:      #f0f0f0;
+
+  /* Modal backdrop */
+  --modal-overlay:       rgba(0,0,0,0.6);
+
   /* Shape */
   --radius:              0.375rem;
 
@@ -152,6 +159,13 @@
   --color-chart-3:              var(--chart-3);
   --color-chart-4:              var(--chart-4);
   --color-chart-5:              var(--chart-5);
+
+  /* Skill level */
+  --color-pro:                  var(--pro);
+  --color-pro-foreground:       var(--pro-foreground);
+
+  /* Modal */
+  --color-modal-overlay:        var(--modal-overlay);
 
   /* Border radius scale */
   --radius-sm:   calc(var(--radius) - 4px);
@@ -250,6 +264,11 @@
 .delta-up   { background-color: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); }
 .delta-down { background-color: color-mix(in srgb, var(--info)   10%, transparent); color: var(--info);   }
 .delta-flat { background-color: var(--muted); color: var(--muted-foreground); }
+
+/* Camera skill level badges */
+.level-beginner     { color: var(--success); background-color: color-mix(in srgb, var(--success) 10%, transparent); border-color: color-mix(in srgb, var(--success) 20%, transparent); }
+.level-intermediate { color: var(--warning); background-color: color-mix(in srgb, var(--warning) 10%, transparent); border-color: color-mix(in srgb, var(--warning) 20%, transparent); }
+.level-pro          { color: var(--pro);     background-color: color-mix(in srgb, var(--pro)     10%, transparent); border-color: color-mix(in srgb, var(--pro)     20%, transparent); }
 
 /* ----------------------------------------------------------
    6. LAYOUT CLASSES — consume layout tokens from :root
