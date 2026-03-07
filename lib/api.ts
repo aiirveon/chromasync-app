@@ -47,6 +47,26 @@ export async function getOnShootRecommendations(params: OnShootRequest) {
   return res.json() as Promise<OnShootResponse>
 }
 
+// ─── On-Shoot Compare ───────────────────────────────────────────────────────
+
+export async function compareFrame(liveFile: File, referenceProfile: Record<string, unknown>) {
+  const form = new FormData()
+  form.append("live_frame", liveFile)
+  form.append("reference_profile", JSON.stringify(referenceProfile))
+
+  const res = await fetch(`${API_BASE}/api/on-shoot/compare`, {
+    method: "POST",
+    body: form,
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || "Frame compare failed")
+  }
+
+  return res.json() as Promise<FrameCompareResponse>
+}
+
 // ─── Post Correction ─────────────────────────────────────────────────────────
 
 export async function analyseFootage(reference: File, scenes: File[]) {
@@ -116,6 +136,33 @@ export interface Recommendation {
   explanation: string
   technical_detail?: string
   tip?: string
+}
+
+export interface FrameMetric {
+  id: string
+  label: string
+  ref_value: string
+  live_value: string
+  delta: string
+  delta_raw: number
+  status: "on_target" | "slight" | "significant"
+  advice: string
+}
+
+export interface FrameCompareResponse {
+  overall_status: "on_target" | "slight" | "significant"
+  overall_label: string
+  live_profile: {
+    colour_temperature_k: number
+    exposure_ev: number
+    saturation_pct: number
+    contrast_ratio: number
+    mean_r: number
+    mean_g: number
+    mean_b: number
+    histogram: number[]
+  }
+  metrics: FrameMetric[]
 }
 
 export interface OnShootResponse {

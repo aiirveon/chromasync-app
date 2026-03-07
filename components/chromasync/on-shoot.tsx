@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { RefreshCw, ArrowRight, ArrowDown, Minus, Loader2, FolderOpen, ChevronDown, ChevronUp, X, Lightbulb } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { RefreshCw, ArrowRight, ArrowDown, Minus, Loader2, FolderOpen, ChevronDown, ChevronUp, X, Lightbulb, Camera, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { getOnShootRecommendations, Recommendation } from "@/lib/api"
+import { getOnShootRecommendations, compareFrame, Recommendation, FrameCompareResponse } from "@/lib/api"
 import { loadSessions, SavedSession } from "@/lib/sessions"
 import type { LivePreShootState } from "@/app/page"
 
@@ -35,6 +35,35 @@ function ExpandableSessionRec({ rec }: { rec: { label: string; plainEnglish: str
           {rec.technical}
         </p>
       )}
+    </div>
+  )
+}
+
+// Drift status helpers
+type DriftStatus = "on_target" | "slight" | "significant"
+const STATUS_DOT: Record<DriftStatus, string> = { on_target: "bg-green-500/70", slight: "bg-yellow-400/70", significant: "bg-red-400/70" }
+const STATUS_TEXT: Record<DriftStatus, string> = { on_target: "text-green-400", slight: "text-yellow-400", significant: "text-red-400" }
+const OVERALL_BADGE: Record<string, string> = { on_target: "border-green-500/30 bg-green-500/5 text-green-400", slight: "border-yellow-400/30 bg-yellow-400/5 text-yellow-400", significant: "border-red-400/30 bg-red-400/5 text-red-400" }
+
+function DriftMetricRow({ metric }: { metric: FrameCompareResponse["metrics"][0] }) {
+  const [expanded, setExpanded] = useState(false)
+  const status = metric.status as DriftStatus
+  const isOnTarget = status === "on_target"
+  return (
+    <div className={`rounded border px-3 py-2.5 ${isOnTarget ? "border-border/50 bg-card/50" : "border-border bg-card"}`}>
+      <div className="flex items-center gap-2">
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[status]}`} />
+        <p className="text-xs font-medium text-foreground flex-1">{metric.label}</p>
+        <span className="text-xs text-muted-foreground font-mono hidden sm:block">{metric.ref_value} &rarr; {metric.live_value}</span>
+        <span className={`text-xs font-mono ${STATUS_TEXT[status]}`}>{metric.delta}</span>
+        {!isOnTarget && (
+          <button onClick={() => setExpanded(!expanded)} className="ml-1 text-muted-foreground hover:text-accent">
+            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+        )}
+      </div>
+      {expanded && !isOnTarget && <p className="mt-2 text-xs text-muted-foreground leading-relaxed pl-3.5 border-l border-border">{metric.advice}</p>}
+      {isOnTarget && <p className="mt-1 text-xs text-muted-foreground/50 pl-3.5">{metric.advice}</p>}
     </div>
   )
 }
@@ -150,6 +179,51 @@ export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled }: OnShootP
   const [showSessionPicker, setShowSessionPicker] = useState(false)
   const [projects, setProjects]           = useState<Array<{id: string; name: string}>>([]) 
   const [filterProjectId, setFilterProjectId] = useState<string | null | undefined>(undefined)
+
+  // Camera settings collapse
+  const [showCameraSettings, setShowCameraSettings] = useState(false)
+
+  // Live frame compare
+  const [liveFramePreview, setLiveFramePreview] = useState<string | null>(null)
+  const [compareLoading, setCompareLoading]     = useState(false)
+  const [compareResult, setCompareResult]       = useState<FrameCompareResponse | null>(null)
+  const [compareError, setCompareError]         = useState<string | null>(null)
+  const liveInputRef = useRef<HTMLInputElement>(null)
+
+  // Reset compare when reference changes
+  useEffect(() => {
+    setCompareResult(null)
+    setLiveFramePreview(null)
+    setCompareError(null)
+  }, [filterProjectId, activeSession])
+
+  async function handleLiveFrame(file: File) {
+    setCompareError(null)
+    setCompareResult(null)
+    let refProfile: Record<string, unknown> | null = null
+    if (filterProjectId === "__current__" && livePreShoot?.result) {
+      refProfile = { ...livePreShoot.result.colour_profile, histogram: livePreShoot.result.histogram }
+    } else if (activeSession) {
+      refProfile = {
+        colour_temperature_k: activeSession.colour_temperature_k,
+        exposure_ev: activeSession.exposure_ev,
+        saturation_pct: activeSession.saturation_pct,
+        contrast_ratio: activeSession.contrast_ratio,
+        mean_r: 128, mean_g: 128, mean_b: 128,
+        histogram: [0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125],
+      }
+    }
+    if (!refProfile) { setCompareError("Select a reference before comparing."); return }
+    setLiveFramePreview(URL.createObjectURL(file))
+    setCompareLoading(true)
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://chromasync-api.onrender.com"}/ping`).catch(() => {})
+      const result = await compareFrame(file, refProfile)
+      setCompareResult(result)
+    } catch (e: unknown) {
+      setCompareError(e instanceof Error ? e.message : "Compare failed - try again.")
+    } finally { setCompareLoading(false) }
+  }
 
   // Auto-jump to Current tab when navigating from Pre-Shoot via "Go to On-Shoot"
   useEffect(() => {
@@ -286,14 +360,22 @@ export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled }: OnShootP
                   ))}
               </div>
             )}
-            {livePreShoot.recommendations && (
+            {livePreShoot.recommendations && livePreShoot.recommendations.length > 0 && (
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Camera settings from current look</p>
-                <div className="space-y-2">
-                  {livePreShoot.recommendations.map((rec) => (
-                    <ExpandableSessionRec key={rec.label} rec={rec} />
-                  ))}
-                </div>
+                <button
+                  onClick={() => setShowCameraSettings(!showCameraSettings)}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showCameraSettings ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  {showCameraSettings ? "Hide" : "Show"} camera settings from this look
+                </button>
+                {showCameraSettings && (
+                  <div className="mt-2 space-y-2">
+                    {livePreShoot.recommendations.map((rec) => (
+                      <ExpandableSessionRec key={rec.label} rec={rec} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -397,17 +479,77 @@ export function OnShoot({ livePreShoot, jumpToCurrent, onJumpHandled }: OnShootP
           </div>
         )}
 
-        {filterProjectId !== "__current__" && activeSession?.recommendations && (
+        {filterProjectId !== "__current__" && activeSession?.recommendations && activeSession.recommendations.length > 0 && (
           <div className="mt-3">
-            <p className="text-xs text-muted-foreground mb-2">Camera settings from your saved look</p>
-            <div className="space-y-2">
-              {activeSession.recommendations.map((rec) => (
-                <ExpandableSessionRec key={rec.label} rec={rec} />
-              ))}
-            </div>
+            <button
+              onClick={() => setShowCameraSettings(!showCameraSettings)}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showCameraSettings ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {showCameraSettings ? "Hide" : "Show"} camera settings from this look
+            </button>
+            {showCameraSettings && (
+              <div className="mt-2 space-y-2">
+                {activeSession.recommendations.map((rec) => (
+                  <ExpandableSessionRec key={rec.label} rec={rec} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Live Frame Compare */}
+      {(filterProjectId === "__current__" ? !!livePreShoot?.result : !!activeSession) && (
+        <div>
+          <div className="mb-2">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Live Frame Compare</p>
+            <p className="text-xs text-muted-foreground/60">Drop a raw, ungraded frame to check drift</p>
+          </div>
+          <div
+            className={`border-2 border-dashed rounded-lg cursor-pointer transition-colors relative overflow-hidden ${liveFramePreview ? "border-border" : "border-border hover:border-accent/50"}`}
+            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleLiveFrame(f) }}
+            onDragOver={(e) => e.preventDefault()}
+            onClick={() => liveInputRef.current?.click()}
+          >
+            <input ref={liveInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLiveFrame(f) }} />
+            {liveFramePreview ? (
+              <div className="relative">
+                <img src={liveFramePreview} alt="Live frame" className="w-full max-h-44 object-cover opacity-70" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {compareLoading
+                    ? <div className="flex flex-col items-center gap-2"><Loader2 className="w-6 h-6 text-accent animate-spin" /><p className="text-xs text-foreground font-medium">Comparing...</p></div>
+                    : <p className="text-xs text-foreground bg-background/80 px-3 py-1.5 rounded">Tap to change</p>
+                  }
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-2"><Camera className="w-5 h-5 text-muted-foreground" /></div>
+                <p className="text-sm font-medium text-foreground mb-0.5">Drop your live frame here</p>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Upload className="w-3 h-3" /><span>Raw, ungraded — straight from camera</span></div>
+              </div>
+            )}
+          </div>
+          {compareError && <div className="mt-2 p-3 rounded border border-destructive/30 bg-destructive/10 text-xs text-destructive">{compareError}</div>}
+          {compareResult && (
+            <div className="mt-3 space-y-2">
+              <div className={`flex items-center gap-2 px-3 py-2 rounded border text-xs font-medium ${OVERALL_BADGE[compareResult.overall_status]}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${compareResult.overall_status === "on_target" ? "bg-green-500/70" : compareResult.overall_status === "slight" ? "bg-yellow-400/70" : "bg-red-400/70"}`} />
+                {compareResult.overall_label}
+                <span className="text-muted-foreground font-normal ml-1">
+                  {compareResult.overall_status === "on_target" ? "— matches reference" : compareResult.overall_status === "slight" ? "— minor adjustments" : "— adjust on camera"}
+                </span>
+              </div>
+              <div className="space-y-1">
+                {compareResult.metrics.map((metric) => (
+                  <DriftMetricRow key={metric.id} metric={metric} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Conditions card */}
       <Card className="bg-card border-border">
