@@ -1,5 +1,16 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://chromasync-api.onrender.com"
 
+// Wake-up ping (Render free tier cold start)
+export async function pingAPI(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/ping`, { method: "GET" })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+
 // ─── Pre-Shoot ───────────────────────────────────────────────────────────────
 
 export async function analyseReferenceFrame(file: File) {
