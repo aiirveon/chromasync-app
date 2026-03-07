@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
-import { RefreshCw, ArrowRight, ArrowDown, Minus, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { RefreshCw, ArrowRight, ArrowDown, Minus, Loader2, FolderOpen, ChevronDown, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { getOnShootRecommendations, Recommendation } from "@/lib/api"
+import { loadSessions, SavedSession } from "@/lib/sessions"
 
 const conditions = [
   { id: "location",       label: "Location Type",  options: ["Indoor", "Outdoor", "Mixed"],                    default: "Outdoor"      },
@@ -39,6 +40,28 @@ export function OnShoot() {
   const [error, setError]                 = useState<string | null>(null)
   const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null)
 
+  // Saved session state
+  const [sessions, setSessions]           = useState<SavedSession[]>([])
+  const [sessionsLoading, setSessionsLoading] = useState(false)
+  const [activeSession, setActiveSession] = useState<SavedSession | null>(null)
+  const [showSessionPicker, setShowSessionPicker] = useState(false)
+  const [projects, setProjects]           = useState<Array<{id: string; name: string}>>([]) 
+  const [filterProjectId, setFilterProjectId] = useState<string | null | undefined>(undefined)
+
+  useEffect(() => {
+    async function fetchAll() {
+      setSessionsLoading(true)
+      const [{ sessions: loaded }, { projects: loadedProjects }] = await Promise.all([
+        loadSessions(filterProjectId),
+        import("@/lib/projects").then(m => m.loadProjects()),
+      ])
+      setSessions(loaded)
+      setProjects(loadedProjects)
+      setSessionsLoading(false)
+    }
+    fetchAll()
+  }, [filterProjectId])
+
   async function handleUpdate() {
     setLoading(true)
     setError(null)
@@ -62,6 +85,159 @@ export function OnShoot() {
       <div>
         <h1 className="text-xl font-semibold text-foreground">On-Shoot Guidance</h1>
         <p className="text-sm text-muted-foreground mt-1">Real-time parameter updates as conditions change</p>
+      </div>
+
+      {/* Pre-Shoot Reference */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Pre-Shoot Reference</p>
+          {activeSession && (
+            <button onClick={() => setActiveSession(null)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+              <X className="w-3 h-3" /> Clear
+            </button>
+          )}
+        </div>
+
+        {/* Project filter tabs */}
+        {projects.length > 0 && (
+          <div className="flex gap-2 flex-wrap mb-2">
+            <button
+              onClick={() => setFilterProjectId(undefined)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterProjectId === undefined ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilterProjectId(null)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterProjectId === null ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
+            >
+              No project
+            </button>
+            {projects.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setFilterProjectId(p.id)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filterProjectId === p.id ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Session picker */}
+        <div className="relative">
+          <button
+            onClick={() => setShowSessionPicker(!showSessionPicker)}
+            className="w-full bg-card border border-border rounded-lg px-4 py-3 flex items-center justify-between hover:border-accent/50 transition-colors"
+          >
+            {activeSession ? (
+              <div className="text-left">
+                <p className="text-sm text-foreground">{activeSession.name}</p>
+                {activeSession.camera_name && <p className="text-xs text-muted-foreground">{activeSession.camera_name}</p>}
+              </div>
+            ) : (
+              <span className="text-sm text-muted-foreground">
+                {sessionsLoading ? "Loading saved looks..." : sessions.length === 0 ? "No saved looks yet — save one in Pre-Shoot" : "Load a saved look to compare..."}
+              </span>
+            )}
+            <div className="flex items-center gap-2">
+              {sessionsLoading && <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />}
+              <FolderOpen className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${showSessionPicker ? "rotate-180" : ""}`} />
+            </div>
+          </button>
+
+          {showSessionPicker && sessions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#1a1a1a] border border-border rounded-lg shadow-xl overflow-hidden">
+              <div className="max-h-56 overflow-y-auto">
+                {sessions.map((session) => (
+                  <button
+                    key={session.id}
+                    onClick={() => { setActiveSession(session); setShowSessionPicker(false) }}
+                    className="w-full px-4 py-3 flex items-start justify-between hover:bg-secondary text-left transition-colors border-b border-border/50 last:border-0"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {session.reference_image_url ? (
+                        <img src={session.reference_image_url} alt="" className="w-10 h-10 rounded object-cover shrink-0 opacity-80" />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-secondary shrink-0 flex items-center justify-center">
+                          <FolderOpen className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm text-foreground truncate">{session.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {session.camera_name ?? "No camera"} · {new Date(session.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                        </p>
+                      </div>
+                    </div>
+                    {activeSession?.id === session.id && (
+                      <span className="text-xs text-accent mt-0.5">Active</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Reference image */}
+        {activeSession?.reference_image_url && (
+          <div className="mt-3 rounded-lg overflow-hidden border border-border">
+            <img src={activeSession.reference_image_url} alt={activeSession.name} className="w-full max-h-40 object-cover opacity-90" />
+            <div className="px-3 py-2 bg-card">
+              <p className="text-xs text-muted-foreground">Reference frame · <span className="text-foreground">{activeSession.name}</span></p>
+            </div>
+          </div>
+        )}
+
+        {/* Active session metrics */}
+        {activeSession && (
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { label: "Target Temp",       value: activeSession.colour_temperature_k ? `${activeSession.colour_temperature_k}K` : "—" },
+              { label: "Target Exposure",   value: activeSession.exposure_ev != null ? `${activeSession.exposure_ev >= 0 ? "+" : ""}${activeSession.exposure_ev.toFixed(2)} EV` : "—" },
+              { label: "Target Saturation", value: activeSession.saturation_pct != null ? `${activeSession.saturation_pct.toFixed(1)}%` : "—" },
+              { label: "Target Contrast",   value: activeSession.contrast_ratio != null ? `${activeSession.contrast_ratio.toFixed(3)}x` : "—" },
+            ].map((m) => (
+              <div key={m.label} className="bg-card border border-accent/20 rounded p-3">
+                <p className="text-xs text-muted-foreground mb-1">{m.label}</p>
+                <p className="text-sm font-semibold font-mono text-accent">{m.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Scene analysis from saved session */}
+        {activeSession?.scene_analysis && (
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {Object.entries(activeSession.scene_analysis)
+              .filter(([key]) => ["shot_type", "lighting_feel", "colour_mood", "suggested_look"].includes(key))
+              .map(([key, val]) => (
+                <div key={key} className="bg-card border border-border rounded p-3">
+                  <p className="text-xs text-muted-foreground mb-1 capitalize">{key.replace("_", " ")}</p>
+                  <p className="text-xs text-foreground">{val}</p>
+                </div>
+              ))
+            }
+          </div>
+        )}
+
+        {/* Recommendations from saved session */}
+        {activeSession?.recommendations && (
+          <div className="mt-3">
+            <p className="text-xs text-muted-foreground mb-2">Camera settings from your saved look</p>
+            <div className="space-y-2">
+              {activeSession.recommendations.map((rec) => (
+                <div key={rec.label} className="bg-card border border-border rounded p-3 border-l-2 border-l-accent">
+                  <p className="text-xs text-muted-foreground mb-0.5">{rec.label}</p>
+                  <p className="text-sm text-foreground">{rec.plainEnglish}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Conditions card */}

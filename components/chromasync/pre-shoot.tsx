@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Camera, Upload, Loader2, ChevronDown, ChevronUp, Sparkles, Search } from "lucide-react"
+import { Camera, Upload, Loader2, ChevronDown, ChevronUp, Sparkles, Search, Save, CheckCircle, Crosshair } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { analyseReferenceFrame, PreShootResponse } from "@/lib/api"
 import { CAMERAS, Camera as CameraType } from "@/lib/cameras"
+import { saveSession, uploadReferenceImage } from "@/lib/sessions"
+import { loadProjects, createProject, Project } from "@/lib/projects"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://chromasync-api.onrender.com"
 
@@ -34,7 +36,11 @@ function ExpandableCard({ label, plainEnglish, technical }: { label: string; pla
   )
 }
 
-export function PreShoot() {
+interface PreShootProps {
+  onTabChange?: (tab: "pre-shoot" | "on-shoot" | "post-correction") => void
+}
+
+export function PreShoot({ onTabChange }: PreShootProps) {
   const [loading, setLoading] = useState(false)
   const [visionLoading, setVisionLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +50,17 @@ export function PreShoot() {
   const [selectedCamera, setSelectedCamera] = useState<CameraType | null>(null)
   const [cameraSearch, setCameraSearch] = useState("")
   const [showCameraList, setShowCameraList] = useState(false)
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [sessionName, setSessionName] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  // Project state
+  const [projects, setProjects] = useState<Project[]>([])
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  const [newProjectName, setNewProjectName] = useState("")
+  const [showNewProject, setShowNewProject] = useState(false)
+  const [creatingProject, setCreatingProject] = useState(false)
+  const [rawFile, setRawFile] = useState<File | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const filteredCameras = CAMERAS.filter(c =>
@@ -67,6 +84,8 @@ export function PreShoot() {
     setPreview(URL.createObjectURL(file))
     setLoading(true)
     setSceneAnalysis(null)
+    setSaveSuccess(false)
+    setRawFile(file)
     const cameraName = selectedCamera?.fullName || "Unknown Camera"
     try {
       const [data] = await Promise.all([analyseReferenceFrame(file), runVisionAnalysis(file, cameraName)])
@@ -128,6 +147,62 @@ export function PreShoot() {
   }
 
   const recommendations = buildRecommendations()
+  async function openSaveModal() {
+    setShowSaveModal(true)
+    const { projects: loaded } = await loadProjects()
+    setProjects(loaded)
+  }
+
+  async function handleCreateProject() {
+    if (!newProjectName.trim()) return
+    setCreatingProject(true)
+    const { project, error: pErr } = await createProject(newProjectName.trim())
+    setCreatingProject(false)
+    if (project) {
+      setProjects((prev) => [project, ...prev])
+      setSelectedProjectId(project.id)
+      setNewProjectName("")
+      setShowNewProject(false)
+    } else {
+      setError(`Failed to create project: ${pErr}`)
+    }
+  }
+
+  async function handleSave() {
+    if (!profile || !sessionName.trim()) return
+    setSaving(true)
+    // Upload reference image
+    const supabase = (await import("@/lib/supabase")).createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    let imageUrl: string | null = null
+    if (rawFile && user) {
+      imageUrl = await uploadReferenceImage(rawFile, user.id)
+    }
+    const { error: saveError } = await saveSession({
+      name: sessionName.trim(),
+      project_id: selectedProjectId,
+      camera_name: selectedCamera?.fullName ?? null,
+      colour_temperature_k: profile.colour_temperature_k,
+      exposure_ev: profile.exposure_ev,
+      saturation_pct: profile.saturation_pct,
+      contrast_ratio: profile.contrast_ratio,
+      scene_analysis: sceneAnalysis ? (sceneAnalysis as unknown as Record<string, string>) : null,
+      recommendations: recommendations.length > 0 ? recommendations : null,
+      reference_image_url: imageUrl,
+    })
+    setSaving(false)
+    if (!saveError) {
+      setSaveSuccess(true)
+      setShowSaveModal(false)
+      setSessionName("")
+      setSelectedProjectId(null)
+    } else {
+      setError(`Failed to save: ${saveError}`)
+    }
+  }
+
+  const hasResults = !!result && !loading
+
   const levelColour: Record<string, string> = {
     beginner: "text-green-400 bg-green-400/10 border-green-400/20",
     intermediate: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
@@ -244,6 +319,17 @@ export function PreShoot() {
 
       {error && <div className="p-3 rounded border border-destructive/30 bg-destructive/10 text-sm text-destructive">{error}</div>}
 
+      {/* Save success banner */}
+      {saveSuccess && (
+        <div className="flex items-center gap-2 p-3 rounded border border-green-400/30 bg-green-400/5 text-sm text-green-400">
+          <CheckCircle className="w-4 h-4 shrink-0" />
+          <span>Look saved! Retrieve it in On-Shoot to match your footage.</span>
+          <button onClick={() => onTabChange?.("on-shoot")} className="ml-auto flex items-center gap-1.5 text-xs text-accent hover:underline shrink-0">
+            <Crosshair className="w-3.5 h-3.5" /> Go to On-Shoot
+          </button>
+        </div>
+      )}
+
       {/* Vision AI scene analysis */}
       {(visionLoading || sceneAnalysis) && (
         <div>
@@ -313,10 +399,99 @@ export function PreShoot() {
         </div>
       )}
 
+      {/* Save + Go to On-Shoot CTAs */}
+      {hasResults && (
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <button
+            onClick={openSaveModal}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-accent/30 bg-accent/5 text-sm text-accent hover:bg-accent/10 transition-colors"
+          >
+            <Save className="w-4 h-4" />
+            Save this look
+          </button>
+          <button
+            onClick={() => onTabChange?.("on-shoot")}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/90 transition-colors"
+          >
+            <Crosshair className="w-4 h-4" />
+            Go to On-Shoot
+          </button>
+        </div>
+      )}
+
       {!result && !loading && (
         <p className="text-center text-xs text-muted-foreground py-4">
           Select your camera and upload a reference frame to get personalised recommendations
         </p>
+      )}
+
+      {/* Save modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-[#1a1a1a] border border-border rounded-xl p-6 shadow-2xl">
+            <h3 className="text-base font-semibold text-foreground mb-1">Save this look</h3>
+            <p className="text-xs text-muted-foreground mb-4">Name it and optionally add it to a project</p>
+
+            <label className="block text-xs text-muted-foreground mb-1.5">Scene name</label>
+            <input
+              type="text"
+              value={sessionName}
+              onChange={(e) => setSessionName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !showNewProject) handleSave() }}
+              placeholder='e.g. "Golden hour bedroom scene"'
+              className="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 mb-4"
+              autoFocus
+            />
+
+            <label className="block text-xs text-muted-foreground mb-1.5">Project <span className="opacity-50">(optional)</span></label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              <button onClick={() => setSelectedProjectId(null)} className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${selectedProjectId === null ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                No project
+              </button>
+              {projects.map((p) => (
+                <button key={p.id} onClick={() => setSelectedProjectId(p.id)} className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${selectedProjectId === p.id ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                  {p.name}
+                </button>
+              ))}
+              <button onClick={() => setShowNewProject(!showNewProject)} className="text-xs px-3 py-1.5 rounded-full border border-dashed border-border text-muted-foreground hover:text-foreground transition-colors">
+                + New project
+              </button>
+            </div>
+
+            {showNewProject && (
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleCreateProject() }}
+                  placeholder='e.g. "Short Film - March 2025"'
+                  className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50"
+                />
+                <button onClick={handleCreateProject} disabled={!newProjectName.trim() || creatingProject} className="px-3 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium disabled:opacity-50 flex items-center">
+                  {creatingProject ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Create"}
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => { setShowSaveModal(false); setSessionName(""); setShowNewProject(false); setNewProjectName("") }}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!sessionName.trim() || saving}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -67,9 +67,9 @@ export default function Home() {
       <main className="main-content">
         <div className="content-wrapper">
           <div className="section-stack">
-            {activeTab === "pre-shoot"       && <PreShoot />}
-            {activeTab === "on-shoot"        && <OnShoot />}
-            {activeTab === "post-correction" && <PostCorrection />}
+            <div className={activeTab === "pre-shoot"       ? "block" : "hidden"}><PreShoot onTabChange={setActiveTab} /></div>
+            <div className={activeTab === "on-shoot"        ? "block" : "hidden"}><OnShoot /></div>
+            <div className={activeTab === "post-correction" ? "block" : "hidden"}><PostCorrection /></div>
           </div>
         </div>
       </main>
