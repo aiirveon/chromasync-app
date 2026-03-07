@@ -12,6 +12,9 @@ import { PostCorrection } from "@/components/chromasync/post-correction"
 import { StatusBar } from "@/components/chromasync/status-bar"
 import { PreShootResponse } from "@/lib/api"
 import { SavedSession } from "@/lib/sessions"
+import { StoryDashboard } from "@/components/chromasync/story-dashboard"
+import { type AppMode } from "@/components/chromasync/mode-switcher"
+import { type StoryTab } from "@/components/chromasync/story-sidebar-nav"
 
 export interface LivePreShootState {
   preview: string | null
@@ -31,6 +34,8 @@ const tabLabels: Record<TabType, string> = {
 
 export default function Home() {
   const [activeTab, setActiveTab]       = useState<TabType>("pre-shoot")
+  const [appMode, setAppMode]           = useState<AppMode>("colour")
+  const [storyTab, setStoryTab]         = useState<StoryTab>("generate")
   const [user, setUser]                 = useState<{ email?: string } | null>(null)
   const [authLoading, setAuthLoading]   = useState(true)
   const [jumpToCurrent, setJumpToCurrent]   = useState(false)
@@ -75,6 +80,10 @@ export default function Home() {
           userEmail={user?.email}
           onSignOut={handleSignOut}
           onSessionSelect={(s) => { setSidebarSession(s); setActiveTab("on-shoot") }}
+          appMode={appMode}
+          onAppModeChange={setAppMode}
+          storyTab={storyTab}
+          onStoryTabChange={setStoryTab}
         />
       </div>
       <div className="mobile-only">
@@ -83,9 +92,15 @@ export default function Home() {
       <main className="main-content">
         <div className="content-wrapper">
           <div className="section-stack">
-            <div className={activeTab === "pre-shoot"       ? "block" : "hidden"}><PreShoot onTabChange={setActiveTab} onLiveStateChange={setLivePreShoot} onGoToOnShoot={() => { setJumpToCurrent(true); setActiveTab("on-shoot") }} /></div>
-            <div className={activeTab === "on-shoot"        ? "block" : "hidden"}><OnShoot livePreShoot={livePreShoot} jumpToCurrent={jumpToCurrent} onJumpHandled={() => setJumpToCurrent(false)} sidebarSession={sidebarSession} onSidebarSessionHandled={() => setSidebarSession(null)} /></div>
-            <div className={activeTab === "post-correction" ? "block" : "hidden"}><PostCorrection /></div>
+            {appMode === "story" ? (
+              <StoryDashboard activeTab={storyTab} onTabChange={setStoryTab} />
+            ) : (
+              <>
+                <div className={activeTab === "pre-shoot"       ? "block" : "hidden"}><PreShoot onTabChange={setActiveTab} onLiveStateChange={setLivePreShoot} onGoToOnShoot={() => { setJumpToCurrent(true); setActiveTab("on-shoot") }} /></div>
+                <div className={activeTab === "on-shoot"        ? "block" : "hidden"}><OnShoot livePreShoot={livePreShoot} jumpToCurrent={jumpToCurrent} onJumpHandled={() => setJumpToCurrent(false)} sidebarSession={sidebarSession} onSidebarSessionHandled={() => setSidebarSession(null)} /></div>
+                <div className={activeTab === "post-correction" ? "block" : "hidden"}><PostCorrection /></div>
+              </>
+            )}
           </div>
         </div>
       </main>

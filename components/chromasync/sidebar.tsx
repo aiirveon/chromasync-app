@@ -5,6 +5,8 @@ import { Camera, Crosshair, Palette, Wifi, LogOut, FolderOpen, Plus, ChevronDown
 import { cn } from "@/lib/utils"
 import { loadProjects, createProject, deleteProject, Project } from "@/lib/projects"
 import { loadSessions, deleteSession, SavedSession } from "@/lib/sessions"
+import { ModeSwitcher, type AppMode } from "./mode-switcher"
+import { StorySidebarNav, type StoryTab } from "./story-sidebar-nav"
 
 interface SidebarProps {
   activeTab: "pre-shoot" | "on-shoot" | "post-correction"
@@ -12,6 +14,10 @@ interface SidebarProps {
   userEmail?: string
   onSignOut?: () => void
   onSessionSelect?: (session: SavedSession) => void
+  appMode: AppMode
+  onAppModeChange: (mode: AppMode) => void
+  storyTab: StoryTab
+  onStoryTabChange: (tab: StoryTab) => void
 }
 
 const navItems = [
@@ -24,7 +30,7 @@ type ConfirmTarget =
   | { type: "session"; id: string; name: string }
   | { type: "project"; id: string; name: string }
 
-export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessionSelect }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessionSelect, appMode, onAppModeChange, storyTab, onStoryTabChange }: SidebarProps) {
   const [projects, setProjects]           = useState<Project[]>([])
   const [projectsOpen, setProjectsOpen]   = useState(true)
   const [expanded, setExpanded]           = useState<Record<string, boolean>>({})
@@ -108,8 +114,8 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
       className="fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden"
       style={{ width: "var(--sidebar-width)" }}
     >
-      {/* Logo */}
-      <div className="p-5 border-b border-sidebar-border shrink-0">
+      {/* Logo + mode switcher */}
+      <div className="p-4 border-b border-sidebar-border shrink-0 space-y-3">
         <div className="flex items-center gap-2.5">
           <div className="relative w-8 h-8 shrink-0">
             <svg viewBox="0 0 32 32" className="w-full h-full">
@@ -122,37 +128,43 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
           </div>
           <span className="text-lg font-semibold text-sidebar-foreground">ChromaSync</span>
         </div>
+        <ModeSwitcher mode={appMode} onChange={onAppModeChange} />
       </div>
 
       {/* Scrollable middle */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
 
-        {/* Navigation */}
-        <nav className="px-3 py-2">
-          <ul className="space-y-0.5">
-            {navItems.map((item) => (
-              <li key={item.id}>
-                <button
-                  onClick={() => onTabChange(item.id)}
-                  title={item.label}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-                    activeTab === item.id
-                      ? "bg-accent/10 text-accent"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  )}
-                >
-                  <item.icon className="w-3.5 h-3.5 shrink-0" />
-                  <span className="text-sm">{item.label}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {/* Navigation — swaps based on app mode */}
+        {appMode === "story" ? (
+          <StorySidebarNav activeTab={storyTab} onTabChange={onStoryTabChange} />
+        ) : (
+          <nav className="px-3 py-2">
+            <ul className="space-y-0.5">
+              {navItems.map((item) => (
+                <li key={item.id}>
+                  <button
+                    onClick={() => onTabChange(item.id)}
+                    title={item.label}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                      activeTab === item.id
+                        ? "bg-accent/10 text-accent"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    )}
+                  >
+                    <item.icon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="text-sm">{item.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
         <div className="mx-3 border-t border-sidebar-border" />
 
-        {/* Projects */}
+        {/* Projects — only shown in colour mode */}
+        {appMode === "colour" && (<>
         <div className="p-3">
           <button
             onClick={() => setProjectsOpen(!projectsOpen)}
@@ -301,6 +313,8 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
           )}
         </div>
       </div>
+
+      </>)}
 
       {/* Delete confirmation overlay */}
       {confirm && (
