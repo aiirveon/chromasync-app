@@ -6,6 +6,7 @@ import { StoryLoglineForge } from "./story-logline-forge"
 import { StoryCharacterForge } from "./story-character-forge"
 import { StoryBeatBoard } from "./story-beat-board"
 import { StoryHud } from "./story-hud"
+import { StoryBible } from "./story-bible"
 import {
   generateLoglines,
   generateCharacter,
@@ -137,12 +138,21 @@ export function StoryDashboard() {
     setStage("beat-board")
   }
 
+  // ─── Stage 3 — beat saved incrementally ────────────────────────────────────
+
+  async function handleBeatSaved(beats: CompletedBeat[]) {
+    setCompletedBeats(beats)
+    if (story) {
+      await updateStory(story.id, { beats: beats as any })
+    }
+  }
+
   // ─── Stage 3 — beat board complete ────────────────────────────────────────
 
   async function handleBeatsComplete(beats: CompletedBeat[]) {
     setCompletedBeats(beats)
     if (story) {
-      await updateStory(story.id, { stage: 3 })
+      await updateStory(story.id, { stage: 3, beats: beats as any })
       setStory((prev) => prev ? { ...prev, stage: 3 } : prev)
     }
     setStage("complete")
@@ -156,6 +166,15 @@ export function StoryDashboard() {
       {stage !== "cold-open" && stage !== "logline-forge" && (
         <StoryHud story={story} />
       )}
+
+      {/* Story Bible — slides in from right */}
+      <StoryBible
+        story={story}
+        completedBeats={completedBeats}
+        currentStage={stage}
+        onEditLogline={() => setStage("logline-forge")}
+        onEditCharacter={() => setStage("character-forge")}
+      />
 
       {/* Error banner */}
       {error && (
@@ -225,6 +244,7 @@ export function StoryDashboard() {
           characterWant={characterResponse.want}
           characterNeed={characterResponse.need}
           onBack={() => setStage("character-forge")}
+          onBeatSaved={handleBeatSaved}
           onComplete={handleBeatsComplete}
         />
       )}

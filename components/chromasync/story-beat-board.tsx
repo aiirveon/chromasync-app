@@ -18,6 +18,7 @@ interface StoryBeatBoardProps {
   characterWant: string
   characterNeed: string
   onBack: () => void
+  onBeatSaved?: (beats: CompletedBeat[]) => void
   onComplete: (beats: CompletedBeat[]) => void
 }
 
@@ -52,6 +53,7 @@ export function StoryBeatBoard({
   characterWant,
   characterNeed,
   onBack,
+  onBeatSaved,
   onComplete,
 }: StoryBeatBoardProps) {
   const beatDefs = format === "film" ? FILM_BEATS : SHORT_BEATS
@@ -138,14 +140,17 @@ export function StoryBeatBoard({
       })
     )
 
+    // Build updated beats list for saving
+    const updatedBeats: CompletedBeat[] = [
+      ...getCompletedBeats(),
+      { number: slots[activeBeat].def.number, name: slots[activeBeat].def.name, answer: currentAnswer.trim() },
+    ]
+    onBeatSaved?.(updatedBeats)
+
     // If all done
     if (completedCount + 1 === total) {
-      const finalBeats: CompletedBeat[] = [
-        ...getCompletedBeats(),
-        { number: slots[activeBeat].def.number, name: slots[activeBeat].def.name, answer: currentAnswer.trim() },
-      ]
       setLoadingBeat(null)
-      onComplete(finalBeats)
+      onComplete(updatedBeats)
       return
     }
 
