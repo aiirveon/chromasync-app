@@ -1,117 +1,289 @@
 "use client"
 
-import { Sparkles, Users, Map, Clapperboard, FileText, BookOpen, ArrowRight } from "lucide-react"
-import type { StoryTab } from "./story-sidebar-nav"
+import { useState } from "react"
+import { StoryColdOpen } from "./story-cold-open"
+import { StoryLoglineForge } from "./story-logline-forge"
+import { StoryCharacterForge } from "./story-character-forge"
+import { StoryBeatBoard } from "./story-beat-board"
+import { StoryHud } from "./story-hud"
+import {
+  generateLoglines,
+  generateCharacter,
+  createStory,
+  updateStory,
+  type StoryFormat,
+  type LoglineResponse,
+  type LoglineVersion,
+  type CharacterResponse,
+  type SaveTheCatOption,
+  type CompletedBeat,
+  type Story,
+} from "@/lib/story"
 
-interface StoryDashboardProps {
-  activeTab: StoryTab
-  onTabChange: (tab: StoryTab) => void
-}
+type Stage = "cold-open" | "logline-forge" | "character-forge" | "beat-board" | "complete"
 
-function EmptyState({ icon, label, hint, action }: {
-  icon: React.ReactNode
-  label: string
-  hint: string
-  action: string
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-4">
-        {icon}
-      </div>
-      <p className="text-sm font-medium text-foreground mb-1">{label}</p>
-      <p className="text-xs text-muted-foreground mb-4 max-w-xs">{hint}</p>
-      <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-accent/30 bg-accent/5 text-sm text-accent hover:bg-accent/10 transition-colors">
-        {action} <ArrowRight className="w-3.5 h-3.5" />
-      </button>
-    </div>
-  )
-}
+export function StoryDashboard() {
+  const [stage, setStage] = useState<Stage>("cold-open")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-function GeneratePanel({ onTabChange }: { onTabChange: (tab: StoryTab) => void }) {
-  const templates = [
-    { title: "Character-driven drama",   desc: "A personal journey of change and self-discovery",  tab: "characters" as StoryTab },
-    { title: "Thriller / Suspense",      desc: "Rising tension, hidden secrets, a ticking clock",  tab: "scenes"     as StoryTab },
-    { title: "Visual storyboard first",  desc: "Start with shots and build the story around them", tab: "storyboard" as StoryTab },
-    { title: "Adapt an existing script", desc: "Upload or paste a script to break it into scenes",  tab: "scripts"    as StoryTab },
-  ]
+  // Story state
+  const [story, setStory] = useState<Story | null>(null)
+  const [format, setFormat] = useState<StoryFormat>("film")
+  const [rawIdea, setRawIdea] = useState("")
+  const [loglineResponse, setLoglineResponse] = useState<LoglineResponse | null>(null)
+  const [selectedLogline, setSelectedLogline] = useState<LoglineVersion | null>(null)
+  const [characterResponse, setCharacterResponse] = useState<CharacterResponse | null>(null)
+  const [completedBeats, setCompletedBeats] = useState<CompletedBeat[]>([])
 
-  return (
-    <div className="section-stack">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">Story Generator</h1>
-        <p className="text-sm text-muted-foreground mt-1">Describe your film idea and let AI build the foundation</p>
-      </div>
+  // ─── Stage 0 → 1 ──────────────────────────────────────────────────────────
 
-      <div className="bg-card border border-border rounded-lg p-4">
-        <label className="block text-xs text-muted-foreground mb-2 uppercase tracking-wider">Your idea</label>
-        <textarea
-          rows={4}
-          placeholder="e.g. A war veteran returns to his coastal hometown and discovers his estranged daughter has been secretly documenting the disappearance of local fishermen..."
-          className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50 transition-colors resize-none"
-        />
-        <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            {["Short Film", "Feature", "Series", "Documentary"].map((f) => (
-              <button key={f} className="text-xs px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:border-accent/50 hover:text-foreground transition-colors">
-                {f}
-              </button>
-            ))}
-          </div>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/90 transition-colors">
-            <Sparkles className="w-4 h-4" />
-            Generate
-          </button>
-        </div>
-      </div>
+  async function handleBegin(idea: string, fmt: StoryFormat) {
+    setError(null)
+    setLoading(true)
+    setRawIdea(idea)
+    setFormat(fmt)
 
-      <div>
-        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Or start from a template</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {templates.map((card) => (
-            <button
-              key={card.title}
-              onClick={() => onTabChange(card.tab)}
-              className="text-left bg-card border border-border rounded-lg p-4 hover:border-accent/30 transition-colors group"
-            >
-              <p className="text-sm font-medium text-foreground group-hover:text-accent transition-colors mb-1">{card.title}</p>
-              <p className="text-xs text-muted-foreground">{card.desc}</p>
-            </button>
-          ))}
-        </div>
-      </div>
+    const { data, error: apiError } = await generateLoglines(idea, fmt)
+    if (apiError || !data) {
+      setError(apiError ?? "Something went wrong")
+      setLoading(false)
+      return
+    }
 
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-3">
-          <Sparkles className="w-5 h-5 text-muted-foreground" />
-        </div>
-        <p className="text-sm text-muted-foreground">Your generated story will appear here</p>
-        <p className="text-xs text-muted-foreground/50 mt-1">Characters, scenes and a storyboard will be created automatically</p>
-      </div>
-    </div>
-  )
-}
-
-export function StoryDashboard({ activeTab, onTabChange }: StoryDashboardProps) {
-  if (activeTab === "generate") return <GeneratePanel onTabChange={onTabChange} />
-
-  const panels: Record<Exclude<StoryTab, "generate">, { title: string; sub: string; icon: React.ReactNode; label: string; hint: string; action: string }> = {
-    characters: { title: "Characters", sub: "Build and manage your cast",                       icon: <Users       className="w-5 h-5 text-muted-foreground" />, label: "No characters yet",     hint: "Generate a story first, or add a character manually",                  action: "Add character" },
-    scenes:     { title: "Scenes",     sub: "Structure your narrative beat by beat",            icon: <Map         className="w-5 h-5 text-muted-foreground" />, label: "No scenes yet",         hint: "Generate a story or add scenes manually to build your structure",       action: "Add scene"     },
-    storyboard: { title: "Storyboard", sub: "Visualise your shots before you roll camera",      icon: <Clapperboard className="w-5 h-5 text-muted-foreground" />, label: "No shots yet",        hint: "Add scenes first, then generate or draw panels for each shot",          action: "Add shot"      },
-    scripts:    { title: "Scripts",    sub: "Write, import, or generate your screenplay",       icon: <FileText    className="w-5 h-5 text-muted-foreground" />, label: "No scripts yet",       hint: "Generate from your story, paste existing text, or start from scratch",  action: "New script"    },
-    library:    { title: "Library",    sub: "All your saved stories in one place",              icon: <BookOpen    className="w-5 h-5 text-muted-foreground" />, label: "Your library is empty", hint: "Stories you generate and save will appear here",                       action: "New story"     },
+    setLoglineResponse(data)
+    setStage("logline-forge")
+    setLoading(false)
   }
 
-  const p = panels[activeTab as Exclude<StoryTab, "generate">]
+  // ─── Stage 1 → 2 ──────────────────────────────────────────────────────────
+
+  async function handleSelectLogline(version: LoglineVersion) {
+    setError(null)
+    setLoading(true)
+    setSelectedLogline(version)
+
+    // Create the story record in Supabase
+    const { story: newStory, error: dbError } = await createStory(format, rawIdea)
+    if (dbError || !newStory) {
+      // Don't block — continue without persistence if Supabase fails
+      console.warn("Could not save story:", dbError)
+    } else {
+      await updateStory(newStory.id, {
+        logline: version.logline,
+        logline_label: version.label,
+        stage: 1,
+      })
+      setStory({ ...newStory, logline: version.logline, logline_label: version.label, stage: 1 })
+    }
+
+    setStage("character-forge")
+    setLoading(false)
+  }
+
+  // ─── Stage 2 — wound submitted ────────────────────────────────────────────
+
+  async function handleAskWound(woundAnswer: string, characterName: string) {
+    if (!selectedLogline) return
+    setError(null)
+    setLoading(true)
+
+    const { data, error: apiError } = await generateCharacter(
+      selectedLogline.logline,
+      format,
+      woundAnswer,
+      characterName || undefined
+    )
+
+    if (apiError || !data) {
+      setError(apiError ?? "Something went wrong")
+      setLoading(false)
+      return
+    }
+
+    setCharacterResponse(data)
+    setLoading(false)
+  }
+
+  // ─── Stage 2 — Save the Cat selected ──────────────────────────────────────
+
+  async function handleSelectSaveTheCat(option: SaveTheCatOption) {
+    if (!characterResponse) return
+
+    if (story) {
+      await updateStory(story.id, {
+        character_lie: characterResponse.lie,
+        character_want: characterResponse.want,
+        character_need: characterResponse.need,
+        save_the_cat_scene: option.scene,
+        save_the_cat_framing: option.framing,
+        stage: 2,
+      })
+      setStory((prev) =>
+        prev
+          ? {
+              ...prev,
+              character_lie: characterResponse.lie,
+              character_want: characterResponse.want,
+              character_need: characterResponse.need,
+              save_the_cat_scene: option.scene,
+              save_the_cat_framing: option.framing,
+              stage: 2,
+            }
+          : prev
+      )
+    }
+
+    setStage("beat-board")
+  }
+
+  // ─── Stage 3 — beat board complete ────────────────────────────────────────
+
+  async function handleBeatsComplete(beats: CompletedBeat[]) {
+    setCompletedBeats(beats)
+    if (story) {
+      await updateStory(story.id, { stage: 3 })
+      setStory((prev) => prev ? { ...prev, stage: 3 } : prev)
+    }
+    setStage("complete")
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="section-stack">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">{p.title}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{p.sub}</p>
-      </div>
-      <EmptyState icon={p.icon} label={p.label} hint={p.hint} action={p.action} />
+    <div style={{ minHeight: "100dvh", backgroundColor: "var(--background)" }}>
+      {/* Persistent HUD — visible once logline is locked */}
+      {stage !== "cold-open" && stage !== "logline-forge" && (
+        <StoryHud story={story} />
+      )}
+
+      {/* Error banner */}
+      {error && (
+        <div
+          style={{
+            position: "fixed",
+            top: "1rem",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 100,
+            padding: "0.65rem 1.25rem",
+            backgroundColor: "color-mix(in srgb, var(--destructive) 12%, var(--card))",
+            border: "1px solid var(--destructive)",
+            borderRadius: "var(--radius)",
+            color: "var(--destructive)",
+            fontSize: "0.85rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+          }}
+        >
+          {error}
+          <button
+            onClick={() => setError(null)}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--destructive)", fontSize: "1rem" }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Stage router */}
+      {stage === "cold-open" && (
+        <StoryColdOpen onBegin={handleBegin} loading={loading} />
+      )}
+
+      {stage === "logline-forge" && loglineResponse && (
+        <StoryLoglineForge
+          response={loglineResponse}
+          format={format}
+          onSelect={handleSelectLogline}
+          onBack={() => setStage("cold-open")}
+          loading={loading}
+        />
+      )}
+
+      {stage === "character-forge" && selectedLogline && (
+        <StoryCharacterForge
+          logline={selectedLogline.logline}
+          format={format}
+          characterResponse={characterResponse}
+          loading={loading}
+          onAskWound={handleAskWound}
+          onSelectSaveTheCat={handleSelectSaveTheCat}
+          onBack={() => {
+            setStage("logline-forge")
+            setCharacterResponse(null)
+          }}
+        />
+      )}
+
+      {stage === "beat-board" && selectedLogline && characterResponse && (
+        <StoryBeatBoard
+          format={format}
+          logline={selectedLogline.logline}
+          characterLie={characterResponse.lie}
+          characterWant={characterResponse.want}
+          characterNeed={characterResponse.need}
+          onBack={() => setStage("character-forge")}
+          onComplete={handleBeatsComplete}
+        />
+      )}
+
+      {stage === "complete" && (
+        <div
+          style={{
+            minHeight: "100dvh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "2rem",
+            textAlign: "center",
+          }}
+        >
+          <p
+            className="text-muted-foreground"
+            style={{ fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}
+          >
+            Phase 1 complete
+          </p>
+          <h2
+            className="text-foreground"
+            style={{ fontSize: "1.75rem", fontWeight: 300, lineHeight: 1.4, marginBottom: "1rem", maxWidth: "480px" }}
+          >
+            You had a story.
+          </h2>
+          <p className="text-muted-foreground" style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>
+            {completedBeats.length} beats locked.
+          </p>
+          <p className="text-muted-foreground" style={{ fontSize: "0.875rem", marginBottom: "2.5rem" }}>
+            Story Health Score coming next.
+          </p>
+          <button
+            onClick={() => {
+              setStage("cold-open")
+              setLoglineResponse(null)
+              setSelectedLogline(null)
+              setCharacterResponse(null)
+              setCompletedBeats([])
+              setStory(null)
+              setError(null)
+            }}
+            style={{
+              padding: "0.55rem 1.5rem",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--border)",
+              backgroundColor: "transparent",
+              color: "var(--muted-foreground)",
+              fontSize: "0.85rem",
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            Start a new story
+          </button>
+        </div>
+      )}
     </div>
   )
 }
