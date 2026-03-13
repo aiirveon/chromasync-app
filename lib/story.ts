@@ -25,7 +25,7 @@ export interface LoglineResponse {
 }
 
 export interface SaveTheCatOption {
-  option: "A" | "B"
+  option: "A" | "B" | "Custom"
   scene: string
   framing: "active" | "passive"
 }
@@ -277,6 +277,65 @@ export async function generateInterrogationHints(
         framework,
         location,
         broken_relationship: brokenRelationship,
+      }),
+    })
+    if (!res.ok) throw new Error(await res.text())
+    return { data: await res.json(), error: null }
+  } catch (e: any) {
+    return { data: null, error: e.message }
+  }
+}
+
+export async function regenerateCharacterField(
+  field: "lie" | "want" | "need",
+  logline: string,
+  format: StoryFormat,
+  framework: StoryFramework,
+  woundAnswer: string,
+  currentLie: string,
+  currentWant: string,
+  currentNeed: string
+): Promise<{ data: { value: string } | null; error: string | null }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/story/character-field`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        field, logline, format, framework,
+        wound_answer: woundAnswer,
+        current_lie: currentLie,
+        current_want: currentWant,
+        current_need: currentNeed,
+      }),
+    })
+    if (!res.ok) throw new Error(await res.text())
+    return { data: await res.json(), error: null }
+  } catch (e: any) {
+    return { data: null, error: e.message }
+  }
+}
+
+export async function regenerateSaveTheCat(
+  option: "A" | "B",
+  framing: "active" | "passive",
+  logline: string,
+  format: StoryFormat,
+  framework: StoryFramework,
+  woundAnswer: string,
+  lie: string,
+  existingScene: string,
+  otherScene: string
+): Promise<{ data: SaveTheCatOption | null; error: string | null }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/story/save-the-cat-single`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        option, framing, logline, format, framework,
+        wound_answer: woundAnswer,
+        lie,
+        existing_scene: existingScene,
+        other_scene: otherScene,
       }),
     })
     if (!res.ok) throw new Error(await res.text())
