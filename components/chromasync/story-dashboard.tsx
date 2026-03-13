@@ -265,6 +265,7 @@ export function StoryDashboard() {
       {stage === "beat-board" && selectedLogline && characterResponse && (
         <StoryBeatBoard
           format={format}
+          framework={framework}
           logline={selectedLogline.logline}
           characterLie={characterResponse.lie}
           characterWant={characterResponse.want}

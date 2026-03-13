@@ -22,53 +22,27 @@ export function StoryBible({ story, completedBeats, currentStage, onEditLogline,
 
   return (
     <>
-      {/* Backdrop — closes panel on mobile tap */}
+      {/* Backdrop — desktop dims background, mobile closes on tap */}
       {open && (
         <div
           onClick={() => setOpen(false)}
-          style={{
-            position: "fixed", inset: 0, zIndex: 198,
-            backgroundColor: "var(--modal-overlay)",
-          }}
+          style={{ position: "fixed", inset: 0, zIndex: 198, backgroundColor: "var(--modal-overlay)" }}
         />
       )}
 
-      {/* Toggle button — right side on desktop, bottom-right FAB on mobile */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        style={{
-          position: "fixed",
-          zIndex: 201,
-          backgroundColor: "var(--card)",
-          border: "1px solid var(--border)",
-          cursor: "pointer",
-          color: "var(--muted-foreground)",
-          fontFamily: "inherit",
-          // Mobile: floating button bottom-right
-          bottom: "calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 1rem)",
-          right: "1rem",
-          borderRadius: "var(--radius)",
-          padding: "0.45rem 0.75rem",
-          fontSize: "0.7rem",
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-        }}
-      >
-        {open ? "✕ close" : "📖 bible"}
-      </button>
-
-      {/* Desktop side tab — hidden on mobile via media query */}
       <style>{`
+        /* Desktop: side tab trigger, side panel */
         @media (min-width: 768px) {
-          .bible-fab { display: none !important; }
-          .bible-tab { display: flex !important; }
+          .bible-mobile-fab { display: none !important; }
+          .bible-desktop-tab {
+            display: flex !important;
+            right: ${open ? "300px" : "0"};
+            transition: right 0.25s ease;
+          }
           .bible-panel {
-            top: 0 !important;
-            bottom: 0 !important;
-            left: auto !important;
-            right: 0 !important;
-            width: 300px !important;
-            height: auto !important;
+            top: 0 !important; bottom: 0 !important;
+            right: 0 !important; left: auto !important;
+            width: 300px !important; height: auto !important;
             max-height: none !important;
             border-top: none !important;
             border-left: 1px solid var(--border) !important;
@@ -76,45 +50,40 @@ export function StoryBible({ story, completedBeats, currentStage, onEditLogline,
             transform: translateX(${open ? "0" : "300px"}) !important;
           }
         }
+        /* Mobile: FAB trigger, bottom sheet */
         @media (max-width: 767px) {
-          .bible-tab { display: none !important; }
-          .bible-fab { display: flex !important; }
+          .bible-desktop-tab { display: none !important; }
+          .bible-mobile-fab { display: flex !important; }
           .bible-panel {
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            top: auto !important;
+            left: 0 !important; right: 0 !important;
+            bottom: 0 !important; top: auto !important;
             width: 100% !important;
-            height: 70vh !important;
-            max-height: 70vh !important;
+            height: 72vh !important; max-height: 72vh !important;
             border-top: 1px solid var(--border) !important;
             border-left: none !important;
             border-radius: var(--radius) var(--radius) 0 0 !important;
             transform: translateY(${open ? "0" : "100%"}) !important;
           }
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes bspin { to { transform: rotate(360deg); } }
       `}</style>
 
-      {/* Desktop side toggle tab */}
+      {/* Desktop: vertical side tab */}
       <button
-        className="bible-tab"
+        className="bible-desktop-tab"
         onClick={() => setOpen((v) => !v)}
         style={{
           display: "none",
           position: "fixed",
-          right: open ? "300px" : "0",
           top: "50%",
           transform: "translateY(-50%)",
           zIndex: 201,
-          width: "26px",
-          height: "72px",
+          width: "26px", height: "72px",
           backgroundColor: "var(--card)",
           border: "1px solid var(--border)",
           borderRight: "none",
           borderRadius: "var(--radius) 0 0 var(--radius)",
           cursor: "pointer",
-          transition: "right 0.25s ease",
           color: "var(--muted-foreground)",
           fontSize: "0.6rem",
           writingMode: "vertical-rl",
@@ -128,15 +97,15 @@ export function StoryBible({ story, completedBeats, currentStage, onEditLogline,
         {open ? "close" : "bible"}
       </button>
 
-      {/* Hide the FAB on desktop */}
-      <style>{`.bible-fab { display: none; }`}</style>
+      {/* Mobile: floating action button */}
       <button
-        className="bible-fab"
+        className="bible-mobile-fab"
         onClick={() => setOpen((v) => !v)}
         style={{
+          display: "none",
           position: "fixed",
           zIndex: 201,
-          bottom: "calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 1rem)",
+          bottom: "calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 0.75rem)",
           right: "1rem",
           backgroundColor: "var(--card)",
           border: "1px solid var(--border)",
@@ -148,9 +117,11 @@ export function StoryBible({ story, completedBeats, currentStage, onEditLogline,
           cursor: "pointer",
           color: "var(--muted-foreground)",
           fontFamily: "inherit",
+          alignItems: "center",
+          gap: "0.35rem",
         }}
       >
-        {open ? "✕" : "bible"}
+        {open ? "✕ close" : "📖 bible"}
       </button>
 
       {/* Panel */}
@@ -166,15 +137,28 @@ export function StoryBible({ story, completedBeats, currentStage, onEditLogline,
           flexDirection: "column",
         }}
       >
-        {/* Header */}
+        {/* Panel header */}
         <div style={{
-          padding: "1rem 1rem 0.75rem",
+          padding: "0.85rem 1rem",
           borderBottom: "1px solid var(--border)",
           position: "sticky", top: 0,
           backgroundColor: "var(--card)", zIndex: 1,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <p style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--muted-foreground)", margin: 0 }}>Story Bible</p>
-          <p style={{ fontSize: "0.72rem", color: "var(--muted-foreground)", marginTop: "0.2rem", marginBottom: 0 }}>Everything you have built</p>
+          <div>
+            <p style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--muted-foreground)", margin: 0 }}>Story Bible</p>
+            <p style={{ fontSize: "0.7rem", color: "var(--muted-foreground)", marginTop: "0.15rem", marginBottom: 0 }}>Everything you have built</p>
+          </div>
+          <button
+            onClick={() => setOpen(false)}
+            style={{
+              background: "none", border: "1px solid var(--border)", borderRadius: "var(--radius)",
+              cursor: "pointer", padding: "0.25rem 0.6rem",
+              fontSize: "0.7rem", color: "var(--muted-foreground)", fontFamily: "inherit",
+            }}
+          >
+            ✕
+          </button>
         </div>
 
         <div style={{ padding: "0.75rem", flex: 1 }}>

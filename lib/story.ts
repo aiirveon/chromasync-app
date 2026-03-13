@@ -286,6 +286,40 @@ export async function generateInterrogationHints(
   }
 }
 
+export async function generateBeatSuggestions(
+  beatNumber: number,
+  beatName: string,
+  format: StoryFormat,
+  framework: StoryFramework,
+  logline: string,
+  characterLie: string,
+  characterWant: string,
+  characterNeed: string,
+  completedBeats: CompletedBeat[]
+): Promise<{ data: { suggestions: string[] } | null; error: string | null }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/story/beat-suggestion`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        beat_number: beatNumber,
+        beat_name: beatName,
+        format,
+        framework,
+        logline,
+        character_lie: characterLie,
+        character_want: characterWant,
+        character_need: characterNeed,
+        completed_beats: completedBeats,
+      }),
+    })
+    if (!res.ok) throw new Error(await res.text())
+    return { data: await res.json(), error: null }
+  } catch (e: any) {
+    return { data: null, error: e.message }
+  }
+}
+
 export async function regenerateSingleLogline(
   rawIdea: string,
   format: StoryFormat,

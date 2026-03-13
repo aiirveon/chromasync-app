@@ -190,7 +190,7 @@ export function StoryCharacterForge({
                 key={label}
                 style={{
                   padding: "1rem 1.25rem",
-                  backgroundColor: "var(--card)",
+                  backgroundColor: "var(--muted)",
                   borderRadius: "var(--radius)",
                   borderLeft: `2px solid ${colour}`,
                 }}
@@ -198,7 +198,7 @@ export function StoryCharacterForge({
                 <p style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.1em", color: colour, marginBottom: "0.4rem" }}>
                   {label}
                 </p>
-                <p className="text-foreground" style={{ fontSize: "0.9rem", lineHeight: 1.5 }}>{value}</p>
+                <p className="text-foreground" style={{ fontSize: "0.875rem", lineHeight: 1.5 }}>{value}</p>
               </div>
             ))}
           </div>
@@ -258,7 +258,7 @@ export function StoryCharacterForge({
             <p style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--pro)", marginBottom: "0.4rem" }}>
               To think about next
             </p>
-            <p className="text-foreground" style={{ fontSize: "0.875rem", lineHeight: 1.5, fontStyle: "italic" }}>
+            <p className="text-foreground" style={{ fontSize: "0.875rem", lineHeight: 1.5 }}>
               {characterResponse.secondary_character_prompt}
             </p>
           </div>
