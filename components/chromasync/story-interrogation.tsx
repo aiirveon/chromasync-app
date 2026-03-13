@@ -189,95 +189,85 @@ export function StoryInterrogation({
               </p>
 
               {/* Textarea */}
-              <div style={{ position: "relative" }}>
-                <textarea
-                  value={state.value}
-                  onChange={(e) => updateValue(index, e.target.value)}
-                  placeholder={q.placeholder}
-                  rows={2}
-                  className="bg-muted text-foreground border-border"
-                  style={{
-                    width: "100%",
-                    border: `1px solid ${state.locked ? "var(--success)" : ""}`,
-                    borderRadius: "var(--radius)",
-                    padding: "0.65rem 0.75rem",
-                    paddingBottom: state.value.trim().length > 3 ? "2rem" : "0.65rem",
-                    fontSize: "0.82rem",
-                    lineHeight: 1.5,
-                    resize: "vertical",
-                    outline: "none",
-                    fontFamily: "inherit",
-                    transition: "border-color 0.15s",
-                    opacity: state.locked ? 0.8 : 1,
-                  }}
-                  onFocus={(e) => { if (!state.locked) e.currentTarget.style.borderColor = "var(--accent)" }}
-                  onBlur={(e) => { if (!state.locked) e.currentTarget.style.borderColor = "" }}
-                />
-                {/* Commit button — bottom right of textarea */}
-                {state.value.trim().length > 3 && (
+              <textarea
+                value={state.value}
+                onChange={(e) => updateValue(index, e.target.value)}
+                placeholder={q.placeholder}
+                rows={2}
+                className="bg-muted text-foreground border-border"
+                style={{
+                  width: "100%",
+                  border: `1px solid ${state.locked ? "var(--success)" : ""}`,
+                  borderRadius: "var(--radius)",
+                  padding: "0.65rem 0.75rem",
+                  fontSize: "0.82rem",
+                  lineHeight: 1.5,
+                  resize: "vertical",
+                  outline: "none",
+                  fontFamily: "inherit",
+                  transition: "border-color 0.15s",
+                  opacity: state.locked ? 0.8 : 1,
+                }}
+                onFocus={(e) => { if (!state.locked) e.currentTarget.style.borderColor = "var(--accent)" }}
+                onBlur={(e) => { if (!state.locked) e.currentTarget.style.borderColor = "" }}
+              />
+
+              {/* Suggest + Commit row */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                  {/* Suggest button — left */}
                   <button
-                    onClick={() => state.locked
-                      ? setQuestions((prev) => prev.map((q, i) => i === index ? { ...q, locked: false } : q))
-                      : lockAnswer(index)
-                    }
+                    onClick={() => requestSuggestions(index)}
+                    disabled={state.loadingSuggestions}
+                    className="text-muted-foreground"
                     style={{
-                      position: "absolute",
-                      bottom: "0.4rem",
-                      right: "0.5rem",
-                      padding: "0.2rem 0.55rem",
-                      borderRadius: "calc(var(--radius) - 2px)",
-                      border: `1px solid ${state.locked ? "var(--success)" : "var(--border)"}`,
-                      backgroundColor: state.locked
-                        ? "color-mix(in srgb, var(--success) 12%, var(--muted))"
-                        : "var(--muted)",
-                      color: state.locked ? "var(--success)" : "var(--muted-foreground)",
-                      fontSize: "0.65rem",
-                      cursor: "pointer",
+                      padding: "0.3rem 0.75rem",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--border)",
+                      backgroundColor: "transparent",
+                      fontSize: "0.72rem",
+                      cursor: state.loadingSuggestions ? "not-allowed" : "pointer",
                       fontFamily: "inherit",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
                       transition: "all 0.15s",
                     }}
                   >
-                    {state.locked ? "✓ committed" : "commit"}
+                    {state.loadingSuggestions ? (
+                      <>
+                        <span style={{ width: "10px", height: "10px", border: "1.5px solid var(--muted-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block", flexShrink: 0 }} />
+                        Suggesting…
+                      </>
+                    ) : state.suggestionsRequested ? "↻ Refresh" : "Suggest →"}
                   </button>
-                )}
-              </div>
 
-              {/* Suggest button + chips row */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <button
-                  onClick={() => requestSuggestions(index)}
-                  disabled={state.loadingSuggestions}
-                  className="text-muted-foreground border-border"
-                  style={{
-                    alignSelf: "flex-start",
-                    padding: "0.3rem 0.75rem",
-                    borderRadius: "var(--radius)",
-                    border: "1px solid",
-                    backgroundColor: "transparent",
-                    fontSize: "0.72rem",
-                    cursor: state.loadingSuggestions ? "not-allowed" : "pointer",
-                    fontFamily: "inherit",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {state.loadingSuggestions ? (
-                    <>
-                      <span style={{
-                        width: "10px", height: "10px",
-                        border: "1.5px solid var(--muted-foreground)",
-                        borderTopColor: "transparent",
-                        borderRadius: "50%",
-                        animation: "spin 0.7s linear infinite",
-                        display: "inline-block",
-                        flexShrink: 0,
-                      }} />
-                      Suggesting…
-                    </>
-                  ) : state.suggestionsRequested ? "↻ Refresh suggestions" : "Suggest →"}
-                </button>
+                  {/* Commit button — right */}
+                  {state.value.trim().length > 3 && (
+                    <button
+                      onClick={() => state.locked
+                        ? setQuestions((prev) => prev.map((q, i) => i === index ? { ...q, locked: false } : q))
+                        : lockAnswer(index)
+                      }
+                      style={{
+                        padding: "0.3rem 0.75rem",
+                        borderRadius: "var(--radius)",
+                        border: `1px solid ${state.locked ? "var(--success)" : "var(--border)"}`,
+                        backgroundColor: state.locked ? "color-mix(in srgb, var(--success) 10%, transparent)" : "transparent",
+                        color: state.locked ? "var(--success)" : "var(--muted-foreground)",
+                        fontSize: "0.72rem",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {state.locked ? "✓ committed" : "commit"}
+                    </button>
+                  )}
+                </div>
 
                 {/* Suggestion cards */}
                 {state.suggestions.length > 0 && (
