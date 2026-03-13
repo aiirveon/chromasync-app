@@ -40,17 +40,7 @@ export function StoryCharacterForge({
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        padding: "2rem",
-        backgroundColor: "var(--background)",
-        maxWidth: "760px",
-        margin: "0 auto",
-      }}
-    >
+    <div className="story-stage story-stage-inner">
       {/* Back */}
       <button
         onClick={onBack}

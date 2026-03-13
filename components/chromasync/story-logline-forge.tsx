@@ -36,17 +36,7 @@ export function StoryLoglineForge({
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        padding: "2rem",
-        backgroundColor: "var(--background)",
-        maxWidth: "760px",
-        margin: "0 auto",
-      }}
-    >
+    <div className="story-stage story-stage-inner">
       {/* Header */}
       <div style={{ marginBottom: "0.5rem" }}>
         <button

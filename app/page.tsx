@@ -86,23 +86,23 @@ export default function Home() {
           onStoryTabChange={setStoryTab}
         />
       </div>
-      <div className="mobile-only">
-        <MobileHeader currentModule={tabLabels[activeTab]} />
-      </div>
-      <main className="main-content">
-        <div className="content-wrapper">
-          <div className="section-stack">
-            {appMode === "story" ? (
-              <StoryDashboard activeTab={storyTab} onTabChange={setStoryTab} />
-            ) : (
-              <>
-                <div className={activeTab === "pre-shoot"       ? "block" : "hidden"}><PreShoot onTabChange={setActiveTab} onLiveStateChange={setLivePreShoot} onGoToOnShoot={() => { setJumpToCurrent(true); setActiveTab("on-shoot") }} /></div>
-                <div className={activeTab === "on-shoot"        ? "block" : "hidden"}><OnShoot livePreShoot={livePreShoot} jumpToCurrent={jumpToCurrent} onJumpHandled={() => setJumpToCurrent(false)} sidebarSession={sidebarSession} onSidebarSessionHandled={() => setSidebarSession(null)} /></div>
-                <div className={activeTab === "post-correction" ? "block" : "hidden"}><PostCorrection /></div>
-              </>
-            )}
-          </div>
+      {appMode !== "story" && (
+        <div className="mobile-only">
+          <MobileHeader currentModule={tabLabels[activeTab]} />
         </div>
+      )}
+      <main className={appMode === "story" ? "" : "main-content"}>
+        {appMode === "story" ? (
+          <StoryDashboard />
+        ) : (
+          <div className="content-wrapper">
+            <div className="section-stack">
+              <div className={activeTab === "pre-shoot"       ? "block" : "hidden"}><PreShoot onTabChange={setActiveTab} onLiveStateChange={setLivePreShoot} onGoToOnShoot={() => { setJumpToCurrent(true); setActiveTab("on-shoot") }} /></div>
+              <div className={activeTab === "on-shoot"        ? "block" : "hidden"}><OnShoot livePreShoot={livePreShoot} jumpToCurrent={jumpToCurrent} onJumpHandled={() => setJumpToCurrent(false)} sidebarSession={sidebarSession} onSidebarSessionHandled={() => setSidebarSession(null)} /></div>
+              <div className={activeTab === "post-correction" ? "block" : "hidden"}><PostCorrection /></div>
+            </div>
+          </div>
+        )}
       </main>
       <div className="desktop-only">
         <StatusBar processingState="Ready" />

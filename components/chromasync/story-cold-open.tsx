@@ -1,7 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { StoryFormat } from "@/lib/story"
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://chromasync-api.onrender.com"
 
 interface StoryColdOpenProps {
   onBegin: (rawIdea: string, format: StoryFormat) => void
@@ -11,6 +13,15 @@ interface StoryColdOpenProps {
 export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) {
   const [rawIdea, setRawIdea] = useState("")
   const [format, setFormat] = useState<StoryFormat>("film")
+  const [apiReady, setApiReady] = useState(false)
+
+  // Wake Render's free instance the moment this screen mounts.
+  // By the time the user finishes typing, the cold-start delay is gone.
+  useEffect(() => {
+    fetch(`${API_BASE}/health`, { method: "GET" })
+      .then(() => setApiReady(true))
+      .catch(() => setApiReady(true)) // still let them try even if ping fails
+  }, [])
 
   const canProceed = rawIdea.trim().length > 10 && !loading
 
@@ -27,17 +38,10 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
 
   return (
     <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "2rem",
-        backgroundColor: "var(--background)",
-      }}
+      className="story-stage"
+      style={{ alignItems: "center", justifyContent: "center" }}
     >
-      <div style={{ width: "100%", maxWidth: "640px" }}>
+      <div className="story-stage-inner">
 
         {/* Question */}
         <h1
@@ -168,6 +172,9 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
           className="text-muted-foreground"
           style={{ marginTop: "1rem", fontSize: "0.75rem" }}
         >
+          {!apiReady && (
+            <span style={{ color: "var(--accent)", marginRight: "0.4rem" }}>⚡ Warming up…</span>
+          )}
           {format === "film"
             ? "We'll shape it into a film — one beat at a time."
             : "We'll shape it into a short story — one beat at a time."}

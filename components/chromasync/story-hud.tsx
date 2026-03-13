@@ -14,16 +14,7 @@ export function StoryHud({ story }: StoryHudProps) {
       className="border-b border-border bg-muted"
       style={{ padding: "0.5rem 1rem" }}
     >
-      <div
-        style={{
-          display: "flex",
-          gap: "1.5rem",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          maxWidth: "var(--content-max-width)",
-          margin: "0 auto",
-        }}
-      >
+      <div className="story-hud-row">
         {/* Format badge */}
         <span
           className="text-muted-foreground"
@@ -34,7 +25,7 @@ export function StoryHud({ story }: StoryHudProps) {
 
         {/* Logline */}
         {story.logline && (
-          <div style={{ flex: 1, minWidth: "200px" }}>
+          <div style={{ flex: 1, minWidth: "140px" }}>
             <p
               className="text-muted-foreground"
               style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.2rem" }}
@@ -49,7 +40,7 @@ export function StoryHud({ story }: StoryHudProps) {
 
         {/* Character lie */}
         {story.character_lie && (
-          <div style={{ flex: 1, minWidth: "180px" }}>
+          <div style={{ flex: 1, minWidth: "140px" }}>
             <p
               className="text-muted-foreground"
               style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.2rem" }}
