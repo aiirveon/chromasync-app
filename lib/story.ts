@@ -261,12 +261,6 @@ export async function loadStory(id: string): Promise<{ story: Story | null; erro
   return { story: data as Story ?? null, error: error?.message ?? null }
 }
 
-export async function deleteStory(id: string): Promise<{ error: string | null }> {
-  const supabase = createClient()
-  const { error } = await supabase.from("stories").delete().eq("id", id)
-  return { error: error?.message ?? null }
-}
-
 // ─── New API functions ────────────────────────────────────────────────────────
 
 export async function generateInterrogationHints(
