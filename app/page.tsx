@@ -86,11 +86,9 @@ export default function Home() {
           onStoryTabChange={setStoryTab}
         />
       </div>
-      {appMode !== "story" && (
-        <div className="mobile-only">
-          <MobileHeader currentModule={tabLabels[activeTab]} />
-        </div>
-      )}
+      <div className="mobile-only">
+        <MobileHeader currentModule={appMode === "story" ? "Story" : tabLabels[activeTab]} />
+      </div>
       <main className={appMode === "story" ? "" : "main-content"}>
         {appMode === "story" ? (
           <StoryDashboard />
@@ -108,8 +106,13 @@ export default function Home() {
         <StatusBar processingState="Ready" />
       </div>
       <div className="mobile-only">
-        <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-      </div>
+      <MobileBottomNav
+          activeTab={activeTab}
+            onTabChange={setActiveTab}
+            appMode={appMode}
+            onAppModeChange={setAppMode}
+          />
+        </div>
     </div>
   )
 }
