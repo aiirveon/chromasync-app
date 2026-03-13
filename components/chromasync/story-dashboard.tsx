@@ -7,12 +7,15 @@ import { StoryCharacterForge } from "./story-character-forge"
 import { StoryBeatBoard } from "./story-beat-board"
 import { StoryHud } from "./story-hud"
 import { StoryBible } from "./story-bible"
+import { StoryInterrogation } from "./story-interrogation"
 import {
   generateLoglines,
   generateCharacter,
   createStory,
   updateStory,
   type StoryFormat,
+  type StoryFramework,
+  type InterrogationAnswers,
   type LoglineResponse,
   type LoglineVersion,
   type CharacterResponse,
@@ -21,7 +24,7 @@ import {
   type Story,
 } from "@/lib/story"
 
-type Stage = "cold-open" | "logline-forge" | "character-forge" | "beat-board" | "complete"
+type Stage = "cold-open" | "interrogation" | "logline-forge" | "character-forge" | "beat-board" | "complete"
 
 export function StoryDashboard() {
   const [stage, setStage] = useState<Stage>("cold-open")
@@ -31,7 +34,9 @@ export function StoryDashboard() {
   // Story state
   const [story, setStory] = useState<Story | null>(null)
   const [format, setFormat] = useState<StoryFormat>("film")
+  const [framework, setFramework] = useState<StoryFramework>("save_the_cat")
   const [rawIdea, setRawIdea] = useState("")
+  const [interrogation, setInterrogation] = useState<InterrogationAnswers>({ location: "", broken_relationship: "", private_behaviour: "" })
   const [loglineResponse, setLoglineResponse] = useState<LoglineResponse | null>(null)
   const [selectedLogline, setSelectedLogline] = useState<LoglineVersion | null>(null)
   const [characterResponse, setCharacterResponse] = useState<CharacterResponse | null>(null)
@@ -39,13 +44,21 @@ export function StoryDashboard() {
 
   // ─── Stage 0 → 1 ──────────────────────────────────────────────────────────
 
-  async function handleBegin(idea: string, fmt: StoryFormat) {
-    setError(null)
-    setLoading(true)
+  // Stage 0 → interrogation
+  function handleBegin(idea: string, fmt: StoryFormat, fw: StoryFramework) {
     setRawIdea(idea)
     setFormat(fmt)
+    setFramework(fw)
+    setStage("interrogation")
+  }
 
-    const { data, error: apiError } = await generateLoglines(idea, fmt)
+  // Interrogation → logline forge
+  async function handleInterrogationContinue(answers: InterrogationAnswers) {
+    setInterrogation(answers)
+    setError(null)
+    setLoading(true)
+
+    const { data, error: apiError } = await generateLoglines(rawIdea, format, framework, answers)
     if (apiError || !data) {
       setError(apiError ?? "Something went wrong")
       setLoading(false)
@@ -211,12 +224,25 @@ export function StoryDashboard() {
         <StoryColdOpen onBegin={handleBegin} loading={loading} />
       )}
 
+      {stage === "interrogation" && (
+        <StoryInterrogation
+          rawIdea={rawIdea}
+          format={format}
+          framework={framework}
+          onBack={() => setStage("cold-open")}
+          onContinue={handleInterrogationContinue}
+        />
+      )}
+
       {stage === "logline-forge" && loglineResponse && (
         <StoryLoglineForge
           response={loglineResponse}
+          rawIdea={rawIdea}
           format={format}
+          framework={framework}
+          interrogation={interrogation}
           onSelect={handleSelectLogline}
-          onBack={() => setStage("cold-open")}
+          onBack={() => setStage("interrogation")}
           loading={loading}
         />
       )}

@@ -5,6 +5,13 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://chromasync-api.onre
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type StoryFormat = "film" | "short_story"
+export type StoryFramework = "save_the_cat" | "truby" | "story_circle"
+
+export interface InterrogationAnswers {
+  location: string
+  broken_relationship: string
+  private_behaviour: string
+}
 
 export interface LoglineVersion {
   label: string
@@ -97,13 +104,22 @@ export interface Story {
 
 export async function generateLoglines(
   rawIdea: string,
-  format: StoryFormat
+  format: StoryFormat,
+  framework: StoryFramework = "save_the_cat",
+  interrogation: InterrogationAnswers = { location: "", broken_relationship: "", private_behaviour: "" }
 ): Promise<{ data: LoglineResponse | null; error: string | null }> {
   try {
     const res = await fetch(`${API_BASE}/api/story/logline`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ raw_idea: rawIdea, format }),
+      body: JSON.stringify({
+        raw_idea: rawIdea,
+        format,
+        framework,
+        location: interrogation.location,
+        broken_relationship: interrogation.broken_relationship,
+        private_behaviour: interrogation.private_behaviour,
+      }),
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
@@ -238,4 +254,66 @@ export async function deleteStory(id: string): Promise<{ error: string | null }>
   const supabase = createClient()
   const { error } = await supabase.from("stories").delete().eq("id", id)
   return { error: error?.message ?? null }
+}
+
+// ─── New API functions ────────────────────────────────────────────────────────
+
+export async function generateInterrogationHints(
+  questionNumber: number,
+  rawIdea: string,
+  format: StoryFormat,
+  framework: StoryFramework,
+  location: string = "",
+  brokenRelationship: string = ""
+): Promise<{ data: { suggestions: string[] } | null; error: string | null }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/story/interrogation-hints`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question_number: questionNumber,
+        raw_idea: rawIdea,
+        format,
+        framework,
+        location,
+        broken_relationship: brokenRelationship,
+      }),
+    })
+    if (!res.ok) throw new Error(await res.text())
+    return { data: await res.json(), error: null }
+  } catch (e: any) {
+    return { data: null, error: e.message }
+  }
+}
+
+export async function regenerateSingleLogline(
+  rawIdea: string,
+  format: StoryFormat,
+  framework: StoryFramework,
+  label: string,
+  location: string = "",
+  brokenRelationship: string = "",
+  privateBehaviour: string = "",
+  existingLoglines: string[] = []
+): Promise<{ data: LoglineVersion | null; error: string | null }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/story/logline-single`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        raw_idea: rawIdea,
+        format,
+        framework,
+        label,
+        location,
+        broken_relationship: brokenRelationship,
+        private_behaviour: privateBehaviour,
+        existing_loglines: existingLoglines,
+      }),
+    })
+    if (!res.ok) throw new Error(await res.text())
+    return { data: await res.json(), error: null }
+  } catch (e: any) {
+    return { data: null, error: e.message }
+  }
 }

@@ -1,18 +1,21 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import type { StoryFormat } from "@/lib/story"
+import type { StoryFormat, StoryFramework } from "@/lib/story"
+import { StoryFrameworkPicker } from "./story-framework-picker"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://chromasync-api.onrender.com"
 
 interface StoryColdOpenProps {
-  onBegin: (rawIdea: string, format: StoryFormat) => void
+  onBegin: (rawIdea: string, format: StoryFormat, framework: StoryFramework) => void
   loading?: boolean
 }
 
 export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) {
   const [rawIdea, setRawIdea] = useState("")
   const [format, setFormat] = useState<StoryFormat>("film")
+  const [framework, setFramework] = useState<StoryFramework>("save_the_cat")
+  const [showFramework, setShowFramework] = useState(false)
   const [apiReady, setApiReady] = useState(false)
 
   // Wake Render's free instance the moment this screen mounts.
@@ -27,7 +30,7 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
 
   function handleSubmit() {
     if (!canProceed) return
-    onBegin(rawIdea.trim(), format)
+    onBegin(rawIdea.trim(), format, framework)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -165,6 +168,30 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
               "Begin →"
             )}
           </button>
+        </div>
+
+        {/* Framework picker — collapsible */}
+        <div style={{ marginTop: "1.25rem" }}>
+          <button
+            onClick={() => setShowFramework((v) => !v)}
+            className="text-muted-foreground"
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: "0.75rem", fontFamily: "inherit", padding: 0,
+              display: "flex", alignItems: "center", gap: "0.35rem",
+            }}
+          >
+            <span style={{ fontSize: "0.65rem" }}>{showFramework ? "▲" : "▼"}</span>
+            Story structure:{" "}
+            <span style={{ color: "var(--foreground)" }}>
+              {framework === "save_the_cat" ? "Save the Cat" : framework === "truby" ? "Truby's Arc" : "Story Circle"}
+            </span>
+          </button>
+          {showFramework && (
+            <div style={{ marginTop: "0.75rem" }}>
+              <StoryFrameworkPicker value={framework} onChange={setFramework} />
+            </div>
+          )}
         </div>
 
         {/* Hint */}
