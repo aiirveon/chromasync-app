@@ -91,7 +91,7 @@ export default function Home() {
       </div>
       <main className={appMode === "story" ? "" : "main-content"}>
         {appMode === "story" ? (
-          <StoryDashboard />
+          <StoryDashboard activeTab={storyTab} onTabChange={setStoryTab} />
         ) : (
           <div className="content-wrapper">
             <div className="section-stack">

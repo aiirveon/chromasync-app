@@ -8,6 +8,8 @@ import { StoryBeatBoard } from "./story-beat-board"
 import { StoryHud } from "./story-hud"
 import { StoryBible } from "./story-bible"
 import { StoryInterrogation } from "./story-interrogation"
+import { StoryLibrary } from "./story-library"
+import type { StoryTab } from "./story-sidebar-nav"
 import {
   generateLoglines,
   generateCharacter,
@@ -26,7 +28,12 @@ import {
 
 type Stage = "cold-open" | "interrogation" | "logline-forge" | "character-forge" | "beat-board" | "complete"
 
-export function StoryDashboard() {
+interface StoryDashboardProps {
+  activeTab?: StoryTab
+  onTabChange?: (tab: StoryTab) => void
+}
+
+export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDashboardProps) {
   const [stage, setStage] = useState<Stage>("cold-open")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -36,6 +43,8 @@ export function StoryDashboard() {
   const [format, setFormat] = useState<StoryFormat>("film")
   const [framework, setFramework] = useState<StoryFramework>("save_the_cat")
   const [rawIdea, setRawIdea] = useState("")
+  const [title, setTitle] = useState("")
+  const [woundAnswer, setWoundAnswer] = useState("")
   const [interrogation, setInterrogation] = useState<InterrogationAnswers>({ location: "", broken_relationship: "", private_behaviour: "" })
   const [loglineResponse, setLoglineResponse] = useState<LoglineResponse | null>(null)
   const [selectedLogline, setSelectedLogline] = useState<LoglineVersion | null>(null)
@@ -45,10 +54,11 @@ export function StoryDashboard() {
   // ─── Stage 0 → 1 ──────────────────────────────────────────────────────────
 
   // Stage 0 → interrogation
-  function handleBegin(idea: string, fmt: StoryFormat, fw: StoryFramework) {
+  function handleBegin(idea: string, fmt: StoryFormat, fw: StoryFramework, ttl: string) {
     setRawIdea(idea)
     setFormat(fmt)
     setFramework(fw)
+    setTitle(ttl)
     setStage("interrogation")
   }
 
@@ -78,9 +88,8 @@ export function StoryDashboard() {
     setSelectedLogline(version)
 
     // Create the story record in Supabase
-    const { story: newStory, error: dbError } = await createStory(format, rawIdea)
+    const { story: newStory, error: dbError } = await createStory(format, rawIdea, title || undefined, framework)
     if (dbError || !newStory) {
-      // Don't block — continue without persistence if Supabase fails
       console.warn("Could not save story:", dbError)
     } else {
       await updateStory(newStory.id, {
@@ -97,7 +106,9 @@ export function StoryDashboard() {
 
   // ─── Stage 2 — wound submitted ────────────────────────────────────────────
 
-  async function handleAskWound(woundAnswer: string, characterName: string) {
+  async function handleAskWound(wound: string, characterName: string) {
+    const woundAnswer = wound
+    setWoundAnswer(wound)
     if (!selectedLogline) return
     setError(null)
     setLoading(true)
@@ -105,7 +116,7 @@ export function StoryDashboard() {
     const { data, error: apiError } = await generateCharacter(
       selectedLogline.logline,
       format,
-      woundAnswer,
+      wound,
       characterName || undefined
     )
 
@@ -219,12 +230,44 @@ export function StoryDashboard() {
         </div>
       )}
 
-      {/* Stage router */}
-      {stage === "cold-open" && (
+      {/* Library tab */}
+      {activeTab === "library" && (
+        <StoryLibrary
+          onNewStory={() => onTabChange?.("generate")}
+          onResume={(s) => {
+            // Resume logic — set state from saved story
+            setStory(s)
+            setFormat(s.format as any)
+            setFramework((s.framework ?? "save_the_cat") as any)
+            setRawIdea(s.raw_idea ?? "")
+            setTitle(s.title ?? "")
+            if (s.logline) {
+              setSelectedLogline({ logline: s.logline, label: s.logline_label ?? "", angle: "" })
+            }
+            if (s.character_lie) {
+              setCharacterResponse({ lie: s.character_lie, want: s.character_want ?? "", need: s.character_need ?? "", save_the_cat: s.save_the_cat_scene ? [{ option: "A", scene: s.save_the_cat_scene, framing: (s.save_the_cat_framing ?? "active") as any }] : [], secondary_character_prompt: "" })
+            }
+            if (Array.isArray(s.beats) && s.beats.length > 0) {
+              setCompletedBeats(s.beats)
+              setStage("complete")
+            } else if (s.character_lie) {
+              setStage("beat-board")
+            } else if (s.logline) {
+              setStage("character-forge")
+            } else {
+              setStage("cold-open")
+            }
+            onTabChange?.("generate")
+          }}
+        />
+      )}
+
+      {/* Stage router — only shown when on generate tab */}
+      {activeTab === "generate" && stage === "cold-open" && (
         <StoryColdOpen onBegin={handleBegin} loading={loading} />
       )}
 
-      {stage === "interrogation" && (
+      {activeTab === "generate" && stage === "interrogation" && (
         <StoryInterrogation
           rawIdea={rawIdea}
           format={format}
@@ -234,7 +277,7 @@ export function StoryDashboard() {
         />
       )}
 
-      {stage === "logline-forge" && loglineResponse && (
+      {activeTab === "generate" && stage === "logline-forge" && loglineResponse && (
         <StoryLoglineForge
           response={loglineResponse}
           rawIdea={rawIdea}
@@ -247,10 +290,12 @@ export function StoryDashboard() {
         />
       )}
 
-      {stage === "character-forge" && selectedLogline && (
+      {activeTab === "generate" && stage === "character-forge" && selectedLogline && (
         <StoryCharacterForge
           logline={selectedLogline.logline}
           format={format}
+          framework={framework}
+          woundAnswer={woundAnswer}
           characterResponse={characterResponse}
           loading={loading}
           onAskWound={handleAskWound}
@@ -262,7 +307,7 @@ export function StoryDashboard() {
         />
       )}
 
-      {stage === "beat-board" && selectedLogline && characterResponse && (
+      {activeTab === "generate" && stage === "beat-board" && selectedLogline && characterResponse && (
         <StoryBeatBoard
           format={format}
           framework={framework}
@@ -276,7 +321,7 @@ export function StoryDashboard() {
         />
       )}
 
-      {stage === "complete" && (
+      {activeTab === "generate" && stage === "complete" && (
         <div
           style={{
             minHeight: "100dvh",

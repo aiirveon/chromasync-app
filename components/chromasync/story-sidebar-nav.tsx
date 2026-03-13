@@ -1,9 +1,9 @@
 "use client"
 
-import { BookOpen, Clapperboard, Users, Map, Sparkles, FileText } from "lucide-react"
+import { BookOpen, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type StoryTab = "generate" | "characters" | "scenes" | "storyboard" | "scripts" | "library"
+export type StoryTab = "generate" | "library"
 
 interface StorySidebarNavProps {
   activeTab: StoryTab
@@ -11,12 +11,8 @@ interface StorySidebarNavProps {
 }
 
 const storyNavItems = [
-  { id: "generate"   as const, label: "Generate",   icon: Sparkles    },
-  { id: "characters" as const, label: "Characters",  icon: Users       },
-  { id: "scenes"     as const, label: "Scenes",      icon: Map         },
-  { id: "storyboard" as const, label: "Storyboard",  icon: Clapperboard },
-  { id: "scripts"    as const, label: "Scripts",     icon: FileText    },
-  { id: "library"    as const, label: "Library",     icon: BookOpen    },
+  { id: "generate" as const, label: "Generate", icon: Sparkles  },
+  { id: "library"  as const, label: "Library",  icon: BookOpen  },
 ]
 
 export function StorySidebarNav({ activeTab, onTabChange }: StorySidebarNavProps) {

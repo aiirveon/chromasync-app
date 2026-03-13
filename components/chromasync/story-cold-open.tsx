@@ -7,12 +7,13 @@ import { StoryFrameworkPicker } from "./story-framework-picker"
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://chromasync-api.onrender.com"
 
 interface StoryColdOpenProps {
-  onBegin: (rawIdea: string, format: StoryFormat, framework: StoryFramework) => void
+  onBegin: (rawIdea: string, format: StoryFormat, framework: StoryFramework, title: string) => void
   loading?: boolean
 }
 
 export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) {
   const [rawIdea, setRawIdea] = useState("")
+  const [title, setTitle] = useState("")
   const [format, setFormat] = useState<StoryFormat>("film")
   const [framework, setFramework] = useState<StoryFramework>("save_the_cat")
   const [showFramework, setShowFramework] = useState(false)
@@ -30,7 +31,7 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
 
   function handleSubmit() {
     if (!canProceed) return
-    onBegin(rawIdea.trim(), format, framework)
+    onBegin(rawIdea.trim(), format, framework, title.trim())
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -59,6 +60,30 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
         >
           What's the one story you've been putting off telling?
         </h1>
+
+        {/* Story title */}
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Give this story a name (optional)"
+          disabled={loading}
+          style={{
+            width: "100%",
+            backgroundColor: "transparent",
+            color: "var(--foreground)",
+            border: "none",
+            borderBottom: "1px solid var(--border)",
+            borderRadius: 0,
+            padding: "0.4rem 0",
+            fontSize: "0.9rem",
+            fontFamily: "inherit",
+            outline: "none",
+            marginBottom: "1.5rem",
+            transition: "border-color 0.15s",
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)" }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)" }}
+        />
 
         {/* Textarea */}
         <textarea
@@ -147,25 +172,16 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
+              alignSelf: "flex-start",
             }}
           >
             {loading ? (
               <>
-                <span
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    border: "2px solid var(--accent-foreground)",
-                    borderTopColor: "transparent",
-                    borderRadius: "50%",
-                    animation: "spin 0.7s linear infinite",
-                    display: "inline-block",
-                  }}
-                />
-                Building loglines…
+                <span style={{ width: "14px", height: "14px", border: "2px solid var(--accent-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                Saving & building…
               </>
             ) : (
-              "Begin →"
+              "Save & Begin →"
             )}
           </button>
         </div>

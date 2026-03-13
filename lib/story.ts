@@ -85,7 +85,9 @@ export const SHORT_BEATS: BeatDefinition[] = [
 export interface Story {
   id: string
   user_id: string
+  title: string | null
   format: StoryFormat
+  framework: string | null
   raw_idea: string | null
   logline: string | null
   logline_label: string | null
@@ -95,6 +97,7 @@ export interface Story {
   character_need: string | null
   save_the_cat_scene: string | null
   save_the_cat_framing: string | null
+  beats: any | null
   stage: number
   created_at: string
   updated_at: string
@@ -200,7 +203,9 @@ export async function generateCharacter(
 
 export async function createStory(
   format: StoryFormat,
-  rawIdea: string
+  rawIdea: string,
+  title?: string,
+  framework?: StoryFramework
 ): Promise<{ story: Story | null; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -208,11 +213,17 @@ export async function createStory(
 
   const { data, error } = await supabase
     .from("stories")
-    .insert({ user_id: user.id, format, raw_idea: rawIdea, stage: 0 })
+    .insert({ user_id: user.id, format, raw_idea: rawIdea, title: title ?? null, framework: framework ?? "save_the_cat", stage: 0 })
     .select()
     .single()
 
   return { story: data as Story ?? null, error: error?.message ?? null }
+}
+
+export async function deleteStory(id: string): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const { error } = await supabase.from("stories").delete().eq("id", id)
+  return { error: error?.message ?? null }
 }
 
 export async function updateStory(
