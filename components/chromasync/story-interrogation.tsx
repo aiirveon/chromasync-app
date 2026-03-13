@@ -18,6 +18,7 @@ interface StoryInterrogationProps {
 
 interface QuestionState {
   value: string
+  locked: boolean
   suggestions: string[]
   loadingSuggestions: boolean
   suggestionsRequested: boolean
@@ -57,6 +58,7 @@ export function StoryInterrogation({
   const [questions, setQuestions] = useState<QuestionState[]>(
     QUESTIONS.map(() => ({
       value: "",
+      locked: false,
       suggestions: [],
       loadingSuggestions: false,
       suggestionsRequested: false,
@@ -67,7 +69,14 @@ export function StoryInterrogation({
 
   function updateValue(index: number, value: string) {
     setQuestions((prev) =>
-      prev.map((q, i) => (i === index ? { ...q, value } : q))
+      prev.map((q, i) => (i === index ? { ...q, value, locked: false } : q))
+    )
+  }
+
+  function lockAnswer(index: number) {
+    if (!questions[index].value.trim()) return
+    setQuestions((prev) =>
+      prev.map((q, i) => (i === index ? { ...q, locked: true } : q))
     )
   }
 
@@ -81,8 +90,9 @@ export function StoryInterrogation({
       )
     )
 
-    const location = questions[0].value
-    const broken = questions[1].value
+    // Use locked values as authoritative context, fall back to current input
+    const location = questions[0].locked ? questions[0].value : questions[0].value
+    const broken = questions[1].locked ? questions[1].value : questions[1].value
 
     const { data, error } = await generateInterrogationHints(
       index + 1,
@@ -178,28 +188,52 @@ export function StoryInterrogation({
                 {q.sublabel}
               </p>
 
-              {/* Input */}
-              <textarea
-                value={state.value}
-                onChange={(e) => updateValue(index, e.target.value)}
-                placeholder={q.placeholder}
-                rows={2}
-                className="bg-muted text-foreground border-border"
-                style={{
-                  width: "100%",
-                  border: "1px solid",
-                  borderRadius: "var(--radius)",
-                  padding: "0.75rem",
-                  fontSize: "0.875rem",
-                  lineHeight: 1.5,
-                  resize: "vertical",
-                  outline: "none",
-                  fontFamily: "inherit",
-                  transition: "border-color 0.15s",
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)" }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "" }}
-              />
+              {/* Input + lock row */}
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
+                <textarea
+                  value={state.value}
+                  onChange={(e) => updateValue(index, e.target.value)}
+                  placeholder={q.placeholder}
+                  rows={2}
+                  className="bg-muted text-foreground border-border"
+                  style={{
+                    flex: 1,
+                    border: `1px solid ${state.locked ? "var(--success)" : ""}`,
+                    borderRadius: "var(--radius)",
+                    padding: "0.65rem 0.75rem",
+                    fontSize: "0.82rem",
+                    lineHeight: 1.5,
+                    resize: "vertical",
+                    outline: "none",
+                    fontFamily: "inherit",
+                    transition: "border-color 0.15s",
+                    opacity: state.locked ? 0.75 : 1,
+                  }}
+                  onFocus={(e) => { if (!state.locked) e.currentTarget.style.borderColor = "var(--accent)" }}
+                  onBlur={(e) => { if (!state.locked) e.currentTarget.style.borderColor = "" }}
+                />
+                {state.value.trim().length > 3 && (
+                  <button
+                    onClick={() => state.locked ? setQuestions((prev) => prev.map((q, i) => i === index ? { ...q, locked: false } : q)) : lockAnswer(index)}
+                    style={{
+                      marginTop: "0.1rem",
+                      padding: "0.4rem 0.6rem",
+                      borderRadius: "var(--radius)",
+                      border: `1px solid ${state.locked ? "var(--success)" : "var(--border)"}`,
+                      backgroundColor: state.locked ? "color-mix(in srgb, var(--success) 12%, transparent)" : "transparent",
+                      color: state.locked ? "var(--success)" : "var(--muted-foreground)",
+                      fontSize: "0.7rem",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {state.locked ? "✓ Locked" : "Lock →"}
+                  </button>
+                )}
+              </div>
 
               {/* Suggest button + chips row */}
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -238,33 +272,37 @@ export function StoryInterrogation({
                   ) : state.suggestionsRequested ? "↻ Refresh suggestions" : "Suggest →"}
                 </button>
 
-                {/* Chips */}
+                {/* Suggestion cards */}
                 {state.suggestions.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                    {state.suggestions.map((s, si) => (
-                      <button
-                        key={si}
-                        onClick={() => applySuggestion(index, s)}
-                        className="text-muted-foreground border-border"
-                        style={{
-                          padding: "0.3rem 0.65rem",
-                          borderRadius: "99px",
-                          border: "1px solid",
-                          backgroundColor: state.value === s
-                            ? "color-mix(in srgb, var(--accent) 12%, transparent)"
-                            : "transparent",
-                          borderColor: state.value === s ? "var(--accent)" : "",
-                          color: state.value === s ? "var(--accent)" : "",
-                          fontSize: "0.75rem",
-                          cursor: "pointer",
-                          fontFamily: "inherit",
-                          textAlign: "left",
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                    {state.suggestions.map((s, si) => {
+                      const isSelected = state.value === s
+                      return (
+                        <button
+                          key={si}
+                          onClick={() => applySuggestion(index, s)}
+                          style={{
+                            textAlign: "left",
+                            padding: "0.55rem 0.75rem",
+                            borderRadius: "var(--radius)",
+                            border: "1px solid",
+                            borderColor: isSelected ? "var(--accent)" : "var(--border)",
+                            backgroundColor: isSelected
+                              ? "color-mix(in srgb, var(--accent) 10%, var(--card))"
+                              : "var(--card)",
+                            color: isSelected ? "var(--foreground)" : "var(--muted-foreground)",
+                            fontSize: "0.78rem",
+                            lineHeight: 1.4,
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            transition: "all 0.15s",
+                            width: "100%",
+                          }}
+                        >
+                          {s}
+                        </button>
+                      )
+                    })}
                   </div>
                 )}
               </div>
