@@ -27,10 +27,26 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
       .catch(() => setApiReady(true)) // still let them try even if ping fails
   }, [])
 
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [savedOk, setSavedOk] = useState(false)
+
   const canProceed = rawIdea.trim().length > 10 && !loading
 
   function handleSubmit() {
     if (!canProceed) return
+    setShowSaveModal(true)
+  }
+
+  async function handleSaveAndContinue() {
+    setSaving(true)
+    // Small delay so user sees the saving state
+    await new Promise((r) => setTimeout(r, 400))
+    setSaving(false)
+    setSavedOk(true)
+    await new Promise((r) => setTimeout(r, 600))
+    setShowSaveModal(false)
+    setSavedOk(false)
     onBegin(rawIdea.trim(), format, framework, title.trim())
   }
 
@@ -228,6 +244,100 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
+
+      {/* Save modal */}
+      {showSaveModal && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 300,
+            backgroundColor: "var(--modal-overlay)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "1.5rem",
+          }}
+          onClick={() => setShowSaveModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%", maxWidth: "420px",
+              backgroundColor: "var(--card)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius)",
+              padding: "1.5rem",
+              display: "flex", flexDirection: "column", gap: "1rem",
+            }}
+          >
+            <div>
+              <p style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--muted-foreground)", marginBottom: "0.3rem" }}>Save story</p>
+              <h3 className="text-foreground" style={{ fontSize: "1rem", fontWeight: 400 }}>Confirm before we build</h3>
+            </div>
+
+            {/* Title field */}
+            <div>
+              <p style={{ fontSize: "0.7rem", color: "var(--muted-foreground)", marginBottom: "0.4rem" }}>Story name</p>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Give this story a name (optional)"
+                style={{
+                  width: "100%", backgroundColor: "var(--muted)", color: "var(--foreground)",
+                  border: "1px solid var(--border)", borderRadius: "var(--radius)",
+                  padding: "0.6rem 0.75rem", fontSize: "0.875rem", fontFamily: "inherit", outline: "none",
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)" }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)" }}
+              />
+            </div>
+
+            {/* Summary */}
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+              <div style={{ padding: "0.5rem 0.75rem", backgroundColor: "var(--muted)", borderRadius: "var(--radius)", fontSize: "0.75rem", color: "var(--muted-foreground)" }}>
+                {format === "film" ? "🎬 Film" : "📖 Short Story"}
+              </div>
+              <div style={{ padding: "0.5rem 0.75rem", backgroundColor: "var(--muted)", borderRadius: "var(--radius)", fontSize: "0.75rem", color: "var(--muted-foreground)" }}>
+                {framework === "save_the_cat" ? "Save the Cat" : framework === "truby" ? "Truby's Arc" : "Story Circle"}
+              </div>
+            </div>
+
+            {/* Raw idea preview */}
+            <div style={{ padding: "0.65rem 0.75rem", backgroundColor: "var(--muted)", borderRadius: "var(--radius)", borderLeft: "2px solid var(--accent)" }}>
+              <p style={{ fontSize: "0.7rem", color: "var(--muted-foreground)", marginBottom: "0.25rem", textTransform: "uppercase", letterSpacing: "0.07em" }}>Your idea</p>
+              <p className="text-foreground" style={{ fontSize: "0.82rem", lineHeight: 1.5, margin: 0 }}>
+                {rawIdea.trim().slice(0, 120)}{rawIdea.length > 120 ? "…" : ""}
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                style={{ padding: "0.5rem 1rem", borderRadius: "var(--radius)", border: "1px solid var(--border)", backgroundColor: "transparent", color: "var(--muted-foreground)", fontSize: "0.8rem", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveAndContinue}
+                disabled={saving || savedOk}
+                style={{
+                  padding: "0.5rem 1.25rem", borderRadius: "var(--radius)", border: "none",
+                  backgroundColor: savedOk ? "var(--success)" : "var(--accent)",
+                  color: "var(--accent-foreground)", fontSize: "0.8rem", fontWeight: 500,
+                  cursor: saving || savedOk ? "default" : "pointer", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: "0.4rem", transition: "background-color 0.2s",
+                }}
+              >
+                {savedOk ? (
+                  "✓ Saved!"
+                ) : saving ? (
+                  <><span style={{ width: "12px", height: "12px", border: "2px solid var(--accent-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />Saving…</>
+                ) : (
+                  "Save & Continue →"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

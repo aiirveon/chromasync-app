@@ -188,8 +188,8 @@ export function StoryInterrogation({
                 {q.sublabel}
               </p>
 
-              {/* Input + lock row */}
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
+              {/* Textarea */}
+              <div style={{ position: "relative" }}>
                 <textarea
                   value={state.value}
                   onChange={(e) => updateValue(index, e.target.value)}
@@ -197,40 +197,47 @@ export function StoryInterrogation({
                   rows={2}
                   className="bg-muted text-foreground border-border"
                   style={{
-                    flex: 1,
+                    width: "100%",
                     border: `1px solid ${state.locked ? "var(--success)" : ""}`,
                     borderRadius: "var(--radius)",
                     padding: "0.65rem 0.75rem",
+                    paddingBottom: state.value.trim().length > 3 ? "2rem" : "0.65rem",
                     fontSize: "0.82rem",
                     lineHeight: 1.5,
                     resize: "vertical",
                     outline: "none",
                     fontFamily: "inherit",
                     transition: "border-color 0.15s",
-                    opacity: state.locked ? 0.75 : 1,
+                    opacity: state.locked ? 0.8 : 1,
                   }}
                   onFocus={(e) => { if (!state.locked) e.currentTarget.style.borderColor = "var(--accent)" }}
                   onBlur={(e) => { if (!state.locked) e.currentTarget.style.borderColor = "" }}
                 />
+                {/* Commit button — bottom right of textarea */}
                 {state.value.trim().length > 3 && (
                   <button
-                    onClick={() => state.locked ? setQuestions((prev) => prev.map((q, i) => i === index ? { ...q, locked: false } : q)) : lockAnswer(index)}
+                    onClick={() => state.locked
+                      ? setQuestions((prev) => prev.map((q, i) => i === index ? { ...q, locked: false } : q))
+                      : lockAnswer(index)
+                    }
                     style={{
-                      marginTop: "0.1rem",
-                      padding: "0.4rem 0.6rem",
-                      borderRadius: "var(--radius)",
+                      position: "absolute",
+                      bottom: "0.4rem",
+                      right: "0.5rem",
+                      padding: "0.2rem 0.55rem",
+                      borderRadius: "calc(var(--radius) - 2px)",
                       border: `1px solid ${state.locked ? "var(--success)" : "var(--border)"}`,
-                      backgroundColor: state.locked ? "color-mix(in srgb, var(--success) 12%, transparent)" : "transparent",
+                      backgroundColor: state.locked
+                        ? "color-mix(in srgb, var(--success) 12%, var(--muted))"
+                        : "var(--muted)",
                       color: state.locked ? "var(--success)" : "var(--muted-foreground)",
-                      fontSize: "0.7rem",
+                      fontSize: "0.65rem",
                       cursor: "pointer",
                       fontFamily: "inherit",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
                       transition: "all 0.15s",
                     }}
                   >
-                    {state.locked ? "✓ Locked" : "Lock →"}
+                    {state.locked ? "✓ committed" : "commit"}
                   </button>
                 )}
               </div>
