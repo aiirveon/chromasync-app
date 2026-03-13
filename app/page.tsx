@@ -108,10 +108,12 @@ export default function Home() {
       <div className="mobile-only">
       <MobileBottomNav
           activeTab={activeTab}
-            onTabChange={setActiveTab}
-            appMode={appMode}
-            onAppModeChange={setAppMode}
-          />
+          onTabChange={setActiveTab}
+          appMode={appMode}
+          onAppModeChange={setAppMode}
+          storyTab={storyTab}
+          onStoryTabChange={setStoryTab}
+        />
         </div>
     </div>
   )
