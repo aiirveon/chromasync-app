@@ -89,14 +89,22 @@ export interface Story {
   format: StoryFormat
   framework: string | null
   raw_idea: string | null
+  // Interrogation answers
+  interrogation_location: string | null
+  interrogation_broken_relationship: string | null
+  interrogation_private_behaviour: string | null
+  // Logline
   logline: string | null
   logline_label: string | null
+  // Character
+  wound_answer: string | null
   character_name: string | null
   character_lie: string | null
   character_want: string | null
   character_need: string | null
   save_the_cat_scene: string | null
   save_the_cat_framing: string | null
+  // Beats
   beats: any | null
   stage: number
   created_at: string

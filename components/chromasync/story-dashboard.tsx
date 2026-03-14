@@ -76,6 +76,15 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
     setError(null)
     setLoading(true)
 
+    // Persist interrogation answers immediately
+    if (story?.id) {
+      await updateStory(story.id, {
+        interrogation_location: answers.location || null,
+        interrogation_broken_relationship: answers.broken_relationship || null,
+        interrogation_private_behaviour: answers.private_behaviour || null,
+      })
+    }
+
     const { data, error: apiError } = await generateLoglines(rawIdea, format, framework, answers)
     if (apiError || !data) {
       setError(apiError ?? "Something went wrong")
@@ -116,11 +125,18 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
   // ─── Stage 2 — wound submitted ────────────────────────────────────────────
 
   async function handleAskWound(wound: string, characterName: string) {
-    const woundAnswer = wound
     setWoundAnswer(wound)
     if (!selectedLogline) return
     setError(null)
     setLoading(true)
+
+    // Persist wound answer and character name immediately
+    if (story?.id) {
+      await updateStory(story.id, {
+        wound_answer: wound || null,
+        character_name: characterName || null,
+      })
+    }
 
     const { data, error: apiError } = await generateCharacter(
       selectedLogline.logline,
@@ -244,24 +260,55 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
         <StoryLibrary
           onNewStory={() => onTabChange?.("generate")}
           onResume={(s) => {
-            // Set all state first, then switch tab
+            // Restore all state from Supabase record
             setStory(s)
             setFormat(s.format as any)
             setFramework((s.framework ?? "save_the_cat") as any)
             setRawIdea(s.raw_idea ?? "")
             setTitle(s.title ?? "")
+            setError(null)
             setLoglineResponse(null)
+
+            // Restore interrogation answers
+            setInterrogation({
+              location: s.interrogation_location ?? "",
+              broken_relationship: s.interrogation_broken_relationship ?? "",
+              private_behaviour: s.interrogation_private_behaviour ?? "",
+            })
+
+            // Restore wound + character name
+            setWoundAnswer(s.wound_answer ?? "")
+            setWoundInputValue(s.wound_answer ?? "")
+            setCharacterNameInput(s.character_name ?? "")
+
+            // Restore logline
             setSelectedLogline(s.logline ? { logline: s.logline, label: s.logline_label ?? "", angle: "" } : null)
-            setCharacterResponse(s.character_lie ? {
-              lie: s.character_lie,
-              want: s.character_want ?? "",
-              need: s.character_need ?? "",
-              save_the_cat: s.save_the_cat_scene ? [{ option: "A" as const, scene: s.save_the_cat_scene, framing: (s.save_the_cat_framing ?? "active") as any }] : [],
-              secondary_character_prompt: "",
-            } : null)
+
+            // Restore character fields
+            if (s.character_lie) {
+              const cr: CharacterResponse = {
+                lie: s.character_lie,
+                want: s.character_want ?? "",
+                need: s.character_need ?? "",
+                save_the_cat: s.save_the_cat_scene
+                  ? [{ option: "A" as const, scene: s.save_the_cat_scene, framing: (s.save_the_cat_framing ?? "active") as any }]
+                  : [],
+                secondary_character_prompt: "",
+              }
+              setCharacterResponse(cr)
+              setCharacterFields({ lie: s.character_lie, want: s.character_want ?? "", need: s.character_need ?? "" })
+              setCharacterStcOptions(cr.save_the_cat)
+            } else {
+              setCharacterResponse(null)
+              setCharacterFields(null)
+              setCharacterStcOptions(null)
+            }
+
+            // Restore beats and navigate to correct stage
+            // Always go to beat-board if beats exist so user can continue adding
             if (Array.isArray(s.beats) && s.beats.length > 0) {
               setCompletedBeats(s.beats)
-              setStage("complete")
+              setStage("beat-board")  // resume in beat board, not complete
             } else if (s.character_lie) {
               setCompletedBeats([])
               setStage("beat-board")
@@ -272,6 +319,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
               setCompletedBeats([])
               setStage("interrogation")
             }
+
             onTabChange?.("generate")
           }}
         />
@@ -336,9 +384,10 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
           format={format}
           framework={framework}
           logline={selectedLogline.logline}
-          characterLie={characterResponse.lie}
-          characterWant={characterResponse.want}
-          characterNeed={characterResponse.need}
+          characterLie={characterFields?.lie ?? characterResponse.lie}
+          characterWant={characterFields?.want ?? characterResponse.want}
+          characterNeed={characterFields?.need ?? characterResponse.need}
+          initialBeats={completedBeats}
           onBack={() => setStage("character-forge")}
           onBeatSaved={handleBeatSaved}
           onComplete={handleBeatsComplete}

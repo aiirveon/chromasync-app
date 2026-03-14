@@ -21,6 +21,7 @@ interface StoryBeatBoardProps {
   characterLie: string
   characterWant: string
   characterNeed: string
+  initialBeats?: CompletedBeat[]
   onBack: () => void
   onBeatSaved?: (beats: CompletedBeat[]) => void
   onComplete: (beats: CompletedBeat[]) => void
@@ -57,6 +58,7 @@ export function StoryBeatBoard({
   characterLie,
   characterWant,
   characterNeed,
+  initialBeats = [],
   onBack,
   onBeatSaved,
   onComplete,
@@ -64,17 +66,32 @@ export function StoryBeatBoard({
   const beatDefs = format === "film" ? FILM_BEATS : SHORT_BEATS
   const total = beatDefs.length
 
-  const [slots, setSlots] = useState<BeatSlot[]>(() =>
-    beatDefs.map((def, i) => ({
-      def,
-      state: i === 0 ? "active" : "locked",
-      answer: "",
-      aiResponse: null,
-      suggestions: [],
-    }))
-  )
+  const [slots, setSlots] = useState<BeatSlot[]>(() => {
+    // Restore completed beats from saved state
+    const doneMap = new Map(initialBeats.map((b) => [b.number, b.answer]))
+    const lastDone = initialBeats.length > 0
+      ? Math.max(...initialBeats.map((b) => b.number))
+      : 0
+    return beatDefs.map((def, i) => {
+      const answer = doneMap.get(def.number) ?? ""
+      const isDone = doneMap.has(def.number)
+      const isNext = def.number === lastDone + 1
+      return {
+        def,
+        state: isDone ? "done" : (isNext || lastDone === 0 && i === 0) ? "active" : "locked",
+        answer,
+        aiResponse: null,
+        suggestions: [],
+      }
+    })
+  })
 
-  const [activeBeat, setActiveBeat] = useState<number>(0)
+  // Start at the first incomplete beat
+  const [activeBeat, setActiveBeat] = useState<number>(() => {
+    if (initialBeats.length === 0) return 0
+    const nextIndex = beatDefs.findIndex((def) => !initialBeats.find((b) => b.number === def.number))
+    return nextIndex >= 0 ? nextIndex : beatDefs.length - 1
+  })
   const [loadingBeat, setLoadingBeat] = useState<number | null>(null)
   const [loadingQuestion, setLoadingQuestion] = useState(false)
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
