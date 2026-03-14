@@ -14,25 +14,57 @@ export function StoryHud({ story }: StoryHudProps) {
       className="border-b border-border bg-muted"
       style={{ padding: "0.5rem 1rem" }}
     >
-      <div className="story-hud-row">
-        {/* Format badge */}
-        <span
-          className="text-muted-foreground"
-          style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.1em", paddingTop: "0.15rem" }}
-        >
-          {story.format === "film" ? "Film" : "Short Story"}
-        </span>
+      {/* Mobile: stack vertically. Desktop: single row */}
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.5rem",
+      }}>
+        {/* Top row: format badge + stage dots */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span
+            className="text-muted-foreground"
+            style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em" }}
+          >
+            {story.format === "film" ? "Film" : "Short Story"}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+            {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+              <div
+                key={s}
+                style={{
+                  width: "5px",
+                  height: "5px",
+                  borderRadius: "50%",
+                  backgroundColor:
+                    s < story.stage
+                      ? "var(--success)"
+                      : s === story.stage
+                      ? "var(--accent)"
+                      : "var(--border)",
+                }}
+              />
+            ))}
+          </div>
+        </div>
 
         {/* Logline */}
         {story.logline && (
-          <div style={{ flex: 1, minWidth: "140px" }}>
+          <div>
             <p
               className="text-muted-foreground"
-              style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.2rem" }}
+              style={{ fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.15rem" }}
             >
               Logline
             </p>
-            <p className="text-foreground" style={{ fontSize: "0.8rem", lineHeight: 1.4 }}>
+            <p className="text-foreground" style={{
+              fontSize: "0.75rem",
+              lineHeight: 1.4,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}>
               {story.logline}
             </p>
           </div>
@@ -40,38 +72,25 @@ export function StoryHud({ story }: StoryHudProps) {
 
         {/* Character lie */}
         {story.character_lie && (
-          <div style={{ flex: 1, minWidth: "140px" }}>
+          <div>
             <p
               className="text-muted-foreground"
-              style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.2rem" }}
+              style={{ fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.15rem" }}
             >
               The Lie
             </p>
-            <p className="text-foreground" style={{ fontSize: "0.8rem", lineHeight: 1.4 }}>
+            <p className="text-foreground" style={{
+              fontSize: "0.75rem",
+              lineHeight: 1.4,
+              display: "-webkit-box",
+              WebkitLineClamp: 1,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}>
               {story.character_lie}
             </p>
           </div>
         )}
-
-        {/* Stage indicator */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", paddingTop: "0.1rem" }}>
-          {[1, 2, 3, 4, 5, 6, 7].map((s) => (
-            <div
-              key={s}
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                backgroundColor:
-                  s < story.stage
-                    ? "var(--success)"
-                    : s === story.stage
-                    ? "var(--accent)"
-                    : "var(--border)",
-              }}
-            />
-          ))}
-        </div>
       </div>
     </div>
   )

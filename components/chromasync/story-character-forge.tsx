@@ -16,10 +16,18 @@ interface StoryCharacterForgeProps {
   format: StoryFormat
   framework?: StoryFramework
   woundAnswer?: string
+  characterName?: string
+  woundInput?: string
   characterResponse: CharacterResponse | null
+  characterFields: { lie: string; want: string; need: string } | null
+  stcOptions: SaveTheCatOption[] | null
   loading: boolean
   onAskWound: (woundAnswer: string, characterName: string) => void
   onSelectSaveTheCat: (option: SaveTheCatOption) => void
+  onFieldsChange: (fields: { lie: string; want: string; need: string }) => void
+  onStcOptionsChange: (options: SaveTheCatOption[]) => void
+  onWoundInputChange: (value: string) => void
+  onCharacterNameChange: (value: string) => void
   onBack: () => void
 }
 
@@ -34,23 +42,38 @@ export function StoryCharacterForge({
   format,
   framework = "save_the_cat",
   woundAnswer = "",
+  characterName: characterNameProp = "",
+  woundInput: woundInputProp = "",
   characterResponse,
+  characterFields,
+  stcOptions,
   loading,
   onAskWound,
   onSelectSaveTheCat,
+  onFieldsChange,
+  onStcOptionsChange,
+  onWoundInputChange,
+  onCharacterNameChange,
   onBack,
 }: StoryCharacterForgeProps) {
-  const [woundInput, setWoundInput] = useState("")
-  const [characterName, setCharacterName] = useState("")
+  const woundInput = woundInputProp
+  const characterName = characterNameProp
+  const fields = characterFields
 
-  // Editable character fields
-  const [fields, setFields] = useState<{ lie: string; want: string; need: string } | null>(null)
+  function setFields(updater: ((prev: { lie: string; want: string; need: string } | null) => { lie: string; want: string; need: string } | null) | { lie: string; want: string; need: string } | null) {
+    const next = typeof updater === "function" ? updater(fields) : updater
+    if (next) onFieldsChange(next)
+  }
+
+  function setStcOptionsWrapper(updater: ((prev: SaveTheCatOption[] | null) => SaveTheCatOption[] | null) | SaveTheCatOption[] | null) {
+    const next = typeof updater === "function" ? updater(stcOptions) : updater
+    if (next) onStcOptionsChange(next)
+  }
+
+  // Editing UI state — these are ephemeral and OK to be local
   const [editingField, setEditingField] = useState<"lie" | "want" | "need" | null>(null)
   const [editFieldValue, setEditFieldValue] = useState("")
   const [refreshingField, setRefreshingField] = useState<string | null>(null)
-
-  // Save the Cat
-  const [stcOptions, setStcOptions] = useState<SaveTheCatOption[] | null>(null)
   const [selectedSTC, setSelectedSTC] = useState<number | null>(null)
   const [editingSTCIndex, setEditingSTCIndex] = useState<number | null>(null)
   const [editSTCValue, setEditSTCValue] = useState("")
@@ -58,10 +81,10 @@ export function StoryCharacterForge({
   const [showCustomSTC, setShowCustomSTC] = useState(false)
   const [customSTC, setCustomSTC] = useState("")
 
-  // Initialise local state when characterResponse first arrives
+  // Initialise fields/stcOptions when characterResponse first arrives
   if (characterResponse && !fields) {
-    setFields({ lie: characterResponse.lie, want: characterResponse.want, need: characterResponse.need })
-    setStcOptions(characterResponse.save_the_cat)
+    onFieldsChange({ lie: characterResponse.lie, want: characterResponse.want, need: characterResponse.need })
+    onStcOptionsChange(characterResponse.save_the_cat)
   }
 
   const canSubmitWound = woundInput.trim().length > 8 && !loading
@@ -77,6 +100,7 @@ export function StoryCharacterForge({
       fields.lie, fields.want, fields.need
     )
     if (data) setFields((prev) => prev ? { ...prev, [field]: data.value } : prev)
+
     setRefreshingField(null)
   }
 
@@ -107,7 +131,7 @@ export function StoryCharacterForge({
       opt.scene, otherScene
     )
     if (data) {
-      setStcOptions((prev) => prev ? prev.map((o, i) => i === index ? data : o) : prev)
+      setStcOptionsWrapper((prev) => prev ? prev.map((o, i) => i === index ? data : o) : prev)
       if (selectedSTC === index) setSelectedSTC(null)
     }
     setRefreshingSTCIndex(null)
@@ -122,7 +146,7 @@ export function StoryCharacterForge({
 
   function handleApplySTCEdit(index: number) {
     if (!stcOptions || !editSTCValue.trim()) return
-    setStcOptions((prev) => prev ? prev.map((o, i) => i === index ? { ...o, scene: editSTCValue.trim() } : o) : prev)
+    setStcOptionsWrapper((prev) => prev ? prev.map((o, i) => i === index ? { ...o, scene: editSTCValue.trim() } : o) : prev)
     setEditingSTCIndex(null)
     setSelectedSTC(index)
   }
@@ -170,7 +194,7 @@ export function StoryCharacterForge({
           </p>
           <input
             value={characterName}
-            onChange={(e) => setCharacterName(e.target.value)}
+            onChange={(e) => onCharacterNameChange(e.target.value)}
             placeholder="Protagonist's name (optional)"
             disabled={loading}
             style={{ width: "100%", backgroundColor: "var(--muted)", color: "var(--foreground)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "0.65rem 1rem", fontSize: "0.9rem", fontFamily: "inherit", outline: "none", marginBottom: "0.75rem", transition: "border-color 0.15s" }}
@@ -179,7 +203,7 @@ export function StoryCharacterForge({
           />
           <textarea
             value={woundInput}
-            onChange={(e) => setWoundInput(e.target.value)}
+            onChange={(e) => onWoundInputChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canSubmitWound) onAskWound(woundInput.trim(), characterName.trim()) }}
             placeholder="e.g. She was the only witness to something and no one believed her. She learned that telling the truth costs more than silence."
             disabled={loading}

@@ -49,6 +49,10 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
   const [loglineResponse, setLoglineResponse] = useState<LoglineResponse | null>(null)
   const [selectedLogline, setSelectedLogline] = useState<LoglineVersion | null>(null)
   const [characterResponse, setCharacterResponse] = useState<CharacterResponse | null>(null)
+  const [characterFields, setCharacterFields] = useState<{ lie: string; want: string; need: string } | null>(null)
+  const [characterStcOptions, setCharacterStcOptions] = useState<SaveTheCatOption[] | null>(null)
+  const [characterNameInput, setCharacterNameInput] = useState("")
+  const [woundInputValue, setWoundInputValue] = useState("")
   const [completedBeats, setCompletedBeats] = useState<CompletedBeat[]>([])
 
   // ─── Stage 0 → 1 ──────────────────────────────────────────────────────────
@@ -309,13 +313,20 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
           format={format}
           framework={framework}
           woundAnswer={woundAnswer}
+          woundInput={woundInputValue}
+          characterName={characterNameInput}
           characterResponse={characterResponse}
+          characterFields={characterFields}
+          stcOptions={characterStcOptions}
           loading={loading}
           onAskWound={handleAskWound}
           onSelectSaveTheCat={handleSelectSaveTheCat}
+          onFieldsChange={setCharacterFields}
+          onStcOptionsChange={setCharacterStcOptions}
+          onWoundInputChange={setWoundInputValue}
+          onCharacterNameChange={setCharacterNameInput}
           onBack={() => {
             setStage("logline-forge")
-            setCharacterResponse(null)
           }}
         />
       )}
