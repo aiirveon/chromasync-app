@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { StoryColdOpen } from "./story-cold-open"
 import { StoryLoglineForge } from "./story-logline-forge"
 import { StoryCharacterForge } from "./story-character-forge"
@@ -15,6 +15,7 @@ import {
   generateCharacter,
   createStory,
   updateStory,
+  loadStories,
   type StoryFormat,
   type StoryFramework,
   type InterrogationAnswers,
@@ -50,6 +51,42 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
   const [selectedLogline, setSelectedLogline] = useState<LoglineVersion | null>(null)
   const [characterResponse, setCharacterResponse] = useState<CharacterResponse | null>(null)
   const [completedBeats, setCompletedBeats] = useState<CompletedBeat[]>([])
+
+  // Auto-resume most recent story on mount
+  useEffect(() => {
+    loadStories().then(({ stories }) => {
+      if (stories.length === 0) return
+      const s = stories[0]
+      if (!s.raw_idea) return
+      setStory(s)
+      setFormat(s.format as StoryFormat)
+      setFramework((s.framework ?? "save_the_cat") as StoryFramework)
+      setRawIdea(s.raw_idea ?? "")
+      setTitle(s.title ?? "")
+      if (s.logline) setSelectedLogline({ logline: s.logline, label: s.logline_label ?? "", angle: "" })
+      if (s.character_lie) {
+        setCharacterResponse({
+          lie: s.character_lie,
+          want: s.character_want ?? "",
+          need: s.character_need ?? "",
+          save_the_cat: s.save_the_cat_scene
+            ? [{ option: "A" as const, scene: s.save_the_cat_scene, framing: (s.save_the_cat_framing ?? "active") as "active" | "passive" }]
+            : [],
+          secondary_character_prompt: "",
+        })
+      }
+      if (Array.isArray(s.beats) && s.beats.length > 0) {
+        setCompletedBeats(s.beats)
+        setStage("complete")
+      } else if (s.character_lie) {
+        setStage("beat-board")
+      } else if (s.logline) {
+        setStage("character-forge")
+      } else {
+        setStage("interrogation")
+      }
+    })
+  }, [])
 
   // ─── Stage 0 → 1 ──────────────────────────────────────────────────────────
 
