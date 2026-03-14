@@ -5,7 +5,6 @@ import { StoryColdOpen } from "./story-cold-open"
 import { StoryLoglineForge } from "./story-logline-forge"
 import { StoryCharacterForge } from "./story-character-forge"
 import { StoryBeatBoard } from "./story-beat-board"
-import { StoryHud } from "./story-hud"
 import { StoryBible } from "./story-bible"
 import { StoryInterrogation } from "./story-interrogation"
 import { StoryLibrary } from "./story-library"
@@ -210,12 +209,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="story-shell" style={{ minHeight: "100dvh", backgroundColor: "var(--background)" }}>
-      {/* Persistent HUD — visible once logline is locked */}
-      {stage !== "cold-open" && stage !== "logline-forge" && (
-        <StoryHud story={story} />
-      )}
-
+    <div style={{ minHeight: "100dvh", backgroundColor: "var(--background)" }}>
       {/* Story Bible — slides in from right */}
       <StoryBible
         story={story}
