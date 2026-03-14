@@ -10,6 +10,7 @@ import {
 
 interface StoryInterrogationProps {
   rawIdea: string
+  title?: string
   format: StoryFormat
   framework: StoryFramework
   onBack: () => void
@@ -50,6 +51,7 @@ const QUESTIONS = [
 
 export function StoryInterrogation({
   rawIdea,
+  title,
   format,
   framework,
   onBack,
@@ -140,6 +142,28 @@ export function StoryInterrogation({
       >
         ← back
       </button>
+
+      {/* Story context — title + idea */}
+      {(title || rawIdea) && (
+        <div style={{
+          padding: "0.75rem 1rem",
+          backgroundColor: "var(--muted)",
+          borderRadius: "var(--radius)",
+          borderLeft: "2px solid var(--accent)",
+          marginBottom: "1.5rem",
+        }}>
+          {title && (
+            <p className="text-foreground" style={{ fontSize: "0.9rem", fontWeight: 500, marginBottom: rawIdea ? "0.35rem" : 0 }}>
+              {title}
+            </p>
+          )}
+          {rawIdea && (
+            <p className="text-muted-foreground" style={{ fontSize: "0.78rem", lineHeight: 1.5, margin: 0 }}>
+              {rawIdea.length > 140 ? rawIdea.slice(0, 140) + "…" : rawIdea}
+            </p>
+          )}
+        </div>
+      )}
 
       <p
         className="text-muted-foreground"

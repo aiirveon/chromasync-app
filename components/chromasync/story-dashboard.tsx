@@ -281,6 +281,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
       {activeTab === "generate" && stage === "interrogation" && (
         <StoryInterrogation
           rawIdea={rawIdea}
+          title={title}
           format={format}
           framework={framework}
           onBack={() => setStage("cold-open")}
