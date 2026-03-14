@@ -52,12 +52,15 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
   const [characterResponse, setCharacterResponse] = useState<CharacterResponse | null>(null)
   const [completedBeats, setCompletedBeats] = useState<CompletedBeat[]>([])
 
-  // Auto-resume most recent story on mount
+  // Auto-resume most recent in-progress story — only runs once on mount
+  // Does NOT resume stage-0 stories (just saved ideas with no logline yet)
+  // so that starting a new story always begins fresh at cold-open
   useEffect(() => {
     loadStories().then(({ stories }) => {
       if (stories.length === 0) return
-      const s = stories[0]
-      if (!s.raw_idea) return
+      // Only auto-resume stories that are past stage 0 (have actual progress)
+      const s = stories.find((st) => st.stage > 0)
+      if (!s) return
       setStory(s)
       setFormat(s.format as StoryFormat)
       setFramework((s.framework ?? "save_the_cat") as StoryFramework)
