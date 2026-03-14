@@ -332,6 +332,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
         <StoryInterrogation
           rawIdea={rawIdea}
           title={title}
+          theme={theme}
           format={format}
           framework={framework}
           loading={loading}
@@ -366,6 +367,8 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
           characterResponse={characterResponse}
           characterFields={characterFields}
           stcOptions={characterStcOptions}
+          interrogation={interrogation}
+          theme={theme}
           loading={loading}
           onAskWound={handleAskWound}
           onSelectSaveTheCat={handleSelectSaveTheCat}

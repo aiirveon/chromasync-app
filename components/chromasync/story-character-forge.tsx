@@ -22,6 +22,9 @@ interface StoryCharacterForgeProps {
   characterFields: { lie: string; want: string; need: string } | null
   stcOptions: SaveTheCatOption[] | null
   loading: boolean
+  // Full story context for richer suggestions
+  interrogation?: { location: string; broken_relationship: string; private_behaviour: string }
+  theme?: string | null
   onAskWound: (woundAnswer: string, characterName: string) => void
   onSelectSaveTheCat: (option: SaveTheCatOption) => void
   onFieldsChange: (fields: { lie: string; want: string; need: string }) => void
@@ -47,6 +50,8 @@ export function StoryCharacterForge({
   characterResponse,
   characterFields,
   stcOptions,
+  interrogation,
+  theme,
   loading,
   onAskWound,
   onSelectSaveTheCat,
@@ -59,6 +64,13 @@ export function StoryCharacterForge({
   const woundInput = woundInputProp
   const characterName = characterNameProp
   const fields = characterFields
+  const extraCtx = {
+    characterName: characterNameProp,
+    location: interrogation?.location,
+    brokenRelationship: interrogation?.broken_relationship,
+    privateBehaviour: interrogation?.private_behaviour,
+    theme: theme ?? undefined,
+  }
 
   function setFields(updater: ((prev: { lie: string; want: string; need: string } | null) => { lie: string; want: string; need: string } | null) | { lie: string; want: string; need: string } | null) {
     const next = typeof updater === "function" ? updater(fields) : updater
@@ -97,7 +109,8 @@ export function StoryCharacterForge({
     setEditingField(null)
     const { data } = await regenerateCharacterField(
       field, logline, format, framework, woundAnswer || woundInput,
-      fields.lie, fields.want, fields.need
+      fields.lie, fields.want, fields.need,
+      extraCtx
     )
     if (data) setFields((prev) => prev ? { ...prev, [field]: data.value } : prev)
 

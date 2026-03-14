@@ -279,7 +279,9 @@ export async function generateInterrogationHints(
   format: StoryFormat,
   framework: StoryFramework,
   location: string = "",
-  brokenRelationship: string = ""
+  brokenRelationship: string = "",
+  privateBehaviour: string = "",
+  theme: string = ""
 ): Promise<{ data: { suggestions: string[] } | null; error: string | null }> {
   try {
     const res = await fetch(`${API_BASE}/api/story/interrogation-hints`, {
@@ -292,6 +294,8 @@ export async function generateInterrogationHints(
         framework,
         location,
         broken_relationship: brokenRelationship,
+        private_behaviour: privateBehaviour,
+        theme,
       }),
     })
     if (!res.ok) throw new Error(await res.text())
@@ -309,7 +313,14 @@ export async function regenerateCharacterField(
   woundAnswer: string,
   currentLie: string,
   currentWant: string,
-  currentNeed: string
+  currentNeed: string,
+  extra: {
+    characterName?: string
+    location?: string
+    brokenRelationship?: string
+    privateBehaviour?: string
+    theme?: string
+  } = {}
 ): Promise<{ data: { value: string } | null; error: string | null }> {
   try {
     const res = await fetch(`${API_BASE}/api/story/character-field`, {
@@ -318,6 +329,11 @@ export async function regenerateCharacterField(
       body: JSON.stringify({
         field, logline, format, framework,
         wound_answer: woundAnswer,
+        character_name: extra.characterName ?? "",
+        location: extra.location ?? "",
+        broken_relationship: extra.brokenRelationship ?? "",
+        private_behaviour: extra.privateBehaviour ?? "",
+        theme: extra.theme ?? "",
         current_lie: currentLie,
         current_want: currentWant,
         current_need: currentNeed,

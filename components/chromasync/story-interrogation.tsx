@@ -12,6 +12,7 @@ import { Spinner } from "./ui"
 interface StoryInterrogationProps {
   rawIdea: string
   title?: string
+  theme?: string | null
   format: StoryFormat
   framework: StoryFramework
   loading?: boolean
@@ -54,6 +55,7 @@ const QUESTIONS = [
 export function StoryInterrogation({
   rawIdea,
   title,
+  theme,
   format,
   framework,
   loading = false,
@@ -95,9 +97,9 @@ export function StoryInterrogation({
       )
     )
 
-    // Use locked values as authoritative context, fall back to current input
-    const location = questions[0].locked ? questions[0].value : questions[0].value
-    const broken = questions[1].locked ? questions[1].value : questions[1].value
+    const location = questions[0].value
+    const broken = questions[1].value
+    const privateBehaviour = questions[2].value
 
     const { data, error } = await generateInterrogationHints(
       index + 1,
@@ -105,7 +107,9 @@ export function StoryInterrogation({
       format,
       framework,
       location,
-      broken
+      broken,
+      privateBehaviour,
+      theme ?? ""
     )
 
     setQuestions((prev) =>
