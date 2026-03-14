@@ -79,7 +79,7 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
             letterSpacing: "-0.01em",
           }}
         >
-          What's the one story you've been putting off telling?
+          What story have you been putting off telling?
         </h1>
 
         {/* Story title */}
@@ -111,7 +111,7 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
           value={rawIdea}
           onChange={(e) => setRawIdea(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Write anything. A feeling, a sentence, a person, a moment."
+          placeholder="A feeling, a sentence, a person, a moment."
           disabled={loading}
           rows={5}
           autoFocus
@@ -121,8 +121,8 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
             color: "var(--foreground)",
             border: "1px solid var(--border)",
             borderRadius: "var(--radius)",
-            padding: "0.875rem",
-            fontSize: "0.9rem",
+            padding: "0.75rem",
+            fontSize: "0.82rem",
             lineHeight: 1.6,
             resize: "vertical",
             outline: "none",
@@ -180,21 +180,22 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
             onClick={handleSubmit}
             disabled={!canProceed}
             loading={loading}
-            loadingLabel="Saving & building…"
+            loadingLabel="Saving…"
             style={{
-              padding: "0.55rem 1.5rem",
+              padding: "0.45rem 1rem",
               borderRadius: "var(--radius)",
               border: "none",
               backgroundColor: canProceed ? "var(--accent)" : "var(--border)",
               color: canProceed ? "var(--accent-foreground)" : "var(--muted-foreground)",
-              fontSize: "0.875rem",
+              fontSize: "0.8rem",
               fontWeight: 500,
               cursor: canProceed ? "pointer" : "not-allowed",
               fontFamily: "inherit",
               alignSelf: "flex-start",
+              whiteSpace: "nowrap",
             }}
           >
-            Save & Begin →
+            Save & Begin
           </LoadingButton>
         </div>
 
@@ -231,8 +232,8 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
             <span style={{ color: "var(--accent)", marginRight: "0.4rem" }}>⚡ Warming up…</span>
           )}
           {format === "film"
-            ? "We'll shape it into a film — one beat at a time."
-            : "We'll shape it into a short story — one beat at a time."}
+            ? "We'll shape it into a film, one beat at a time."
+            : "We'll shape it into a short story, one beat at a time."}
           {" "}Press ⌘↵ to continue.
         </p>
       </div>

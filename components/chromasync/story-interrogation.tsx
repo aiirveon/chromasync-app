@@ -14,6 +14,7 @@ interface StoryInterrogationProps {
   title?: string
   format: StoryFormat
   framework: StoryFramework
+  loading?: boolean
   onBack: () => void
   onContinue: (answers: InterrogationAnswers) => void
 }
@@ -31,22 +32,22 @@ const QUESTIONS = [
     number: 1,
     field: "location" as keyof InterrogationAnswers,
     label: "Where does this story take place?",
-    sublabel: "One specific location — not a city, but a place with texture.",
-    placeholder: "e.g. A night-shift laundromat in East London, a decommissioned ferry, a hospital car park",
+    sublabel: "One specific place with texture, not just a city.",
+    placeholder: "A night-shift laundromat in East London. A decommissioned ferry.",
   },
   {
     number: 2,
     field: "broken_relationship" as keyof InterrogationAnswers,
-    label: "What relationship is already broken before the story begins?",
-    sublabel: "Not a plot point — something that happened before page one.",
-    placeholder: "e.g. A former business partner who was never repaid, a sister who stopped returning calls two years ago",
+    label: "What relationship is already broken?",
+    sublabel: "Something that happened before the story starts.",
+    placeholder: "A business partner who was never repaid. A sister who stopped calling.",
   },
   {
     number: 3,
     field: "private_behaviour" as keyof InterrogationAnswers,
     label: "What does your protagonist do when no one is watching?",
-    sublabel: "Small, specific, private — reveals who they truly are.",
-    placeholder: "e.g. They re-read the same three text messages every morning, they buy scratch cards and never check them",
+    sublabel: "Small and private. Reveals who they really are.",
+    placeholder: "Re-reads the same three texts every morning. Buys scratch cards and never checks them.",
   },
 ]
 
@@ -55,6 +56,7 @@ export function StoryInterrogation({
   title,
   format,
   framework,
+  loading = false,
   onBack,
   onContinue,
 }: StoryInterrogationProps) {
@@ -170,7 +172,7 @@ export function StoryInterrogation({
         className="text-muted-foreground"
         style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.5rem" }}
       >
-        Before we build — three quick questions
+        Three quick questions
       </p>
       <h2
         className="text-foreground"
@@ -180,10 +182,9 @@ export function StoryInterrogation({
       </h2>
       <p
         className="text-muted-foreground"
-        style={{ fontSize: "0.85rem", lineHeight: 1.5, marginBottom: "2rem" }}
+        style={{ fontSize: "0.8rem", lineHeight: 1.5, marginBottom: "2rem" }}
       >
-        Generic inputs produce generic stories. These three answers give the AI something real to work with.
-        Only the first question is required.
+        Specific inputs produce specific stories. Only the first question is required.
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", marginBottom: "2rem" }}>
@@ -224,8 +225,8 @@ export function StoryInterrogation({
                   width: "100%",
                   border: `1px solid ${state.locked ? "var(--success)" : ""}`,
                   borderRadius: "var(--radius)",
-                  padding: "0.65rem 0.75rem",
-                  fontSize: "0.82rem",
+                  padding: "0.55rem 0.65rem",
+                  fontSize: "0.75rem",
                   lineHeight: 1.5,
                   resize: "vertical",
                   outline: "none",
@@ -334,20 +335,23 @@ export function StoryInterrogation({
         disabled={!canContinue}
         className={canContinue ? "" : "text-muted-foreground"}
         style={{
-          padding: "0.6rem 1.5rem",
+          padding: "0.55rem 1.25rem",
           borderRadius: "var(--radius)",
           border: "none",
           backgroundColor: canContinue ? "var(--accent)" : "var(--border)",
           color: canContinue ? "var(--accent-foreground)" : "",
-          fontSize: "0.875rem",
+          fontSize: "0.82rem",
           fontWeight: 500,
           cursor: canContinue ? "pointer" : "not-allowed",
           fontFamily: "inherit",
           transition: "all 0.15s",
           alignSelf: "flex-start",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.4rem",
         }}
       >
-        Build my loglines →
+        {loading ? <><Spinner size="sm" /> Building…</> : "Build my loglines"}
       </button>
 
 

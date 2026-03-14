@@ -284,6 +284,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
           title={title}
           format={format}
           framework={framework}
+          loading={loading}
           onBack={() => setStage("cold-open")}
           onContinue={handleInterrogationContinue}
         />
