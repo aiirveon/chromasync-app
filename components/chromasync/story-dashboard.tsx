@@ -240,27 +240,33 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
         <StoryLibrary
           onNewStory={() => onTabChange?.("generate")}
           onResume={(s) => {
-            // Resume logic — set state from saved story
+            // Set all state first, then switch tab
             setStory(s)
             setFormat(s.format as any)
             setFramework((s.framework ?? "save_the_cat") as any)
             setRawIdea(s.raw_idea ?? "")
             setTitle(s.title ?? "")
-            if (s.logline) {
-              setSelectedLogline({ logline: s.logline, label: s.logline_label ?? "", angle: "" })
-            }
-            if (s.character_lie) {
-              setCharacterResponse({ lie: s.character_lie, want: s.character_want ?? "", need: s.character_need ?? "", save_the_cat: s.save_the_cat_scene ? [{ option: "A", scene: s.save_the_cat_scene, framing: (s.save_the_cat_framing ?? "active") as any }] : [], secondary_character_prompt: "" })
-            }
+            setLoglineResponse(null)
+            setSelectedLogline(s.logline ? { logline: s.logline, label: s.logline_label ?? "", angle: "" } : null)
+            setCharacterResponse(s.character_lie ? {
+              lie: s.character_lie,
+              want: s.character_want ?? "",
+              need: s.character_need ?? "",
+              save_the_cat: s.save_the_cat_scene ? [{ option: "A" as const, scene: s.save_the_cat_scene, framing: (s.save_the_cat_framing ?? "active") as any }] : [],
+              secondary_character_prompt: "",
+            } : null)
             if (Array.isArray(s.beats) && s.beats.length > 0) {
               setCompletedBeats(s.beats)
               setStage("complete")
             } else if (s.character_lie) {
+              setCompletedBeats([])
               setStage("beat-board")
             } else if (s.logline) {
+              setCompletedBeats([])
               setStage("character-forge")
             } else {
-              setStage("cold-open")
+              setCompletedBeats([])
+              setStage("interrogation")
             }
             onTabChange?.("generate")
           }}
