@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { loadStories, deleteStory, type Story } from "@/lib/story"
 import { Trash2 } from "lucide-react"
+import { Spinner } from "./ui"
 
 interface StoryLibraryProps {
   onResume: (story: Story) => void
@@ -73,7 +74,7 @@ export function StoryLibrary({ onResume, onNewStory }: StoryLibraryProps) {
 
       {loading && (
         <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "var(--muted-foreground)", fontSize: "0.85rem" }}>
-          <span style={{ width: "14px", height: "14px", border: "2px solid var(--accent)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+          <Spinner size="md" />
           Loading your stories…
         </div>
       )}
@@ -194,7 +195,7 @@ export function StoryLibrary({ onResume, onNewStory }: StoryLibraryProps) {
         </div>
       )}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
     </div>
   )
 }

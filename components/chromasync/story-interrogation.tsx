@@ -7,6 +7,7 @@ import {
   type StoryFramework,
   type InterrogationAnswers,
 } from "@/lib/story"
+import { Spinner } from "./ui"
 
 interface StoryInterrogationProps {
   rawIdea: string
@@ -258,12 +259,7 @@ export function StoryInterrogation({
                       transition: "all 0.15s",
                     }}
                   >
-                    {state.loadingSuggestions ? (
-                      <>
-                        <span style={{ width: "10px", height: "10px", border: "1.5px solid var(--muted-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block", flexShrink: 0 }} />
-                        Suggesting…
-                      </>
-                    ) : state.suggestionsRequested ? "↻ Refresh" : "Suggest →"}
+                    {state.loadingSuggestions ? <><Spinner size="sm" /> Suggesting…</> : state.suggestionsRequested ? "↻ Refresh" : "Suggest →"}
                   </button>
 
                   {/* Commit button — right */}
@@ -354,7 +350,7 @@ export function StoryInterrogation({
         Build my loglines →
       </button>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
     </div>
   )
 }

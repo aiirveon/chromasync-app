@@ -9,6 +9,7 @@ import {
   type StoryFormat,
   type StoryFramework,
 } from "@/lib/story"
+import { Spinner } from "./ui"
 
 interface StoryCharacterForgeProps {
   logline: string
@@ -193,9 +194,7 @@ export function StoryCharacterForge({
             disabled={!canSubmitWound}
             style={{ alignSelf: "flex-start", padding: "0.55rem 1.5rem", borderRadius: "var(--radius)", border: "none", backgroundColor: canSubmitWound ? "var(--accent)" : "var(--border)", color: canSubmitWound ? "var(--accent-foreground)" : "var(--muted-foreground)", fontSize: "0.875rem", fontWeight: 500, cursor: canSubmitWound ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "all 0.15s", display: "flex", alignItems: "center", gap: "0.5rem" }}
           >
-            {loading ? (
-              <><span style={{ width: "13px", height: "13px", border: "2px solid var(--accent-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />Building character…</>
-            ) : "Forge the character →"}
+            {loading ? <><Spinner size="md" /> Building character…</> : "Forge the character →"}
           </button>
         </>
       )}
@@ -228,7 +227,7 @@ export function StoryCharacterForge({
                           className="text-muted-foreground"
                           style={{ background: "none", border: "1px solid var(--border)", borderRadius: "3px", cursor: refreshingField ? "not-allowed" : "pointer", padding: "0.15rem 0.4rem", fontSize: "0.6rem", fontFamily: "inherit", display: "flex", alignItems: "center" }}
                         >
-                          {isRefreshing ? <span style={{ width: "8px", height: "8px", border: "1.5px solid var(--muted-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} /> : "↻"}
+                          {isRefreshing ? <Spinner size="sm" /> : "↻"}
                         </button>
                       </div>
                     </div>
@@ -300,7 +299,7 @@ export function StoryCharacterForge({
                           className="text-muted-foreground"
                           style={{ background: "none", border: "1px solid var(--border)", borderRadius: "3px", cursor: refreshingSTCIndex !== null ? "not-allowed" : "pointer", padding: "0.15rem 0.4rem", fontSize: "0.6rem", fontFamily: "inherit", display: "flex", alignItems: "center" }}
                         >
-                          {isRefreshing ? <span style={{ width: "8px", height: "8px", border: "1.5px solid var(--muted-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} /> : "↻"}
+                          {isRefreshing ? <Spinner size="sm" /> : "↻"}
                         </button>
                       </div>
                     </div>
@@ -386,7 +385,7 @@ export function StoryCharacterForge({
         </>
       )}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
     </div>
   )
 }

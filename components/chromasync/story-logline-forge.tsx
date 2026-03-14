@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Spinner } from "./ui"
 import {
   regenerateSingleLogline,
   type LoglineResponse,
@@ -206,13 +207,7 @@ export function StoryLoglineForge({
                         display: "flex", alignItems: "center", gap: "0.25rem",
                       }}
                     >
-                      {isRefreshing ? (
-                        <span style={{
-                          width: "9px", height: "9px",
-                          border: "1.5px solid var(--muted-foreground)", borderTopColor: "transparent",
-                          borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block",
-                        }} />
-                      ) : "↻"}
+                      {isRefreshing ? <Spinner size="sm" /> : "↻"}
                     </button>
                   </div>
                 </div>
@@ -371,19 +366,10 @@ export function StoryLoglineForge({
           alignSelf: "flex-start",
         }}
       >
-        {loading ? (
-          <>
-            <span style={{
-              width: "13px", height: "13px",
-              border: "2px solid var(--accent-foreground)", borderTopColor: "transparent",
-              borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block",
-            }} />
-            Building character…
-          </>
-        ) : "Lock this logline →"}
+        {loading ? <><Spinner size="md" /> Building character…</> : "Lock this logline →"}
       </button>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
     </div>
   )
 }

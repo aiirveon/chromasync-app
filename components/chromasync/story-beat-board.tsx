@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Spinner } from "./ui"
 import {
   FILM_BEATS,
   SHORT_BEATS,
@@ -324,7 +325,7 @@ export function StoryBeatBoard({
         {/* AI question */}
         {loadingQuestion ? (
           <div style={{ padding: "1.25rem", backgroundColor: "var(--muted)", borderRadius: "var(--radius)", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <span style={{ width: "14px", height: "14px", border: "2px solid var(--accent)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block", flexShrink: 0 }} />
+            <Spinner size="md" />
             <span className="text-muted-foreground" style={{ fontSize: "0.85rem" }}>Thinking about your story…</span>
           </div>
         ) : activeSlot.aiResponse ? (
@@ -404,12 +405,7 @@ export function StoryBeatBoard({
                   transition: "all 0.15s",
                 }}
               >
-                {loadingSuggestions ? (
-                  <>
-                    <span style={{ width: "10px", height: "10px", border: "1.5px solid var(--muted-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block", flexShrink: 0 }} />
-                    Suggesting…
-                  </>
-                ) : suggestionsRequested ? "↻ New suggestions" : "Suggest →"}
+                {loadingSuggestions ? <><Spinner size="sm" /> Suggesting…</> : suggestionsRequested ? "↻ New suggestions" : "Suggest →"}
               </button>
 
               {/* Suggestion chips */}
@@ -466,12 +462,7 @@ export function StoryBeatBoard({
                   alignSelf: "flex-start",
                 }}
               >
-                {loadingBeat === activeBeat ? (
-                  <>
-                    <span style={{ width: "13px", height: "13px", border: "2px solid var(--accent-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
-                    Saving…
-                  </>
-                ) : activeBeat + 1 === total ? "Complete beat board →" : `Next: ${slots[activeBeat + 1]?.def.name ?? "Done"} →`}
+                {loadingBeat === activeBeat ? <><Spinner size="md" /> Saving…</> : activeBeat + 1 === total ? "Complete beat board →" : `Next: ${slots[activeBeat + 1]?.def.name ?? "Done"} →`}
               </button>
               <span className="text-muted-foreground" style={{ fontSize: "0.72rem" }}>⌘↵ to continue</span>
             </div>
@@ -479,7 +470,7 @@ export function StoryBeatBoard({
         )}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
     </div>
   )
 }

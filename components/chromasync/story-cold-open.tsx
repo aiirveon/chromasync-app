@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { createStory, type StoryFormat, type StoryFramework } from "@/lib/story"
 import { StoryFrameworkPicker } from "./story-framework-picker"
+import { Spinner, LoadingButton } from "./ui"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://chromasync-api.onrender.com"
 
@@ -175,9 +176,11 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
           </div>
 
           {/* Submit */}
-          <button
+          <LoadingButton
             onClick={handleSubmit}
             disabled={!canProceed}
+            loading={loading}
+            loadingLabel="Saving & building…"
             style={{
               padding: "0.55rem 1.5rem",
               borderRadius: "var(--radius)",
@@ -188,22 +191,11 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
               fontWeight: 500,
               cursor: canProceed ? "pointer" : "not-allowed",
               fontFamily: "inherit",
-              transition: "all 0.15s",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
               alignSelf: "flex-start",
             }}
           >
-            {loading ? (
-              <>
-                <span style={{ width: "14px", height: "14px", border: "2px solid var(--accent-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
-                Saving & building…
-              </>
-            ) : (
-              "Save & Begin →"
-            )}
-          </button>
+            Save & Begin →
+          </LoadingButton>
         </div>
 
         {/* Framework picker — collapsible */}
@@ -245,9 +237,7 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
         </p>
       </div>
 
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
+
 
       {/* Save modal */}
       {showSaveModal && (
@@ -319,25 +309,21 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
               >
                 Cancel
               </button>
-              <button
+              <LoadingButton
                 onClick={handleSaveAndContinue}
                 disabled={saving || savedOk}
+                loading={saving}
+                loadingLabel="Saving…"
                 style={{
                   padding: "0.5rem 1.25rem", borderRadius: "var(--radius)", border: "none",
                   backgroundColor: savedOk ? "var(--success)" : "var(--accent)",
                   color: "var(--accent-foreground)", fontSize: "0.8rem", fontWeight: 500,
                   cursor: saving || savedOk ? "default" : "pointer", fontFamily: "inherit",
-                  display: "flex", alignItems: "center", gap: "0.4rem", transition: "background-color 0.2s",
+                  transition: "background-color 0.2s",
                 }}
               >
-                {savedOk ? (
-                  "✓ Saved!"
-                ) : saving ? (
-                  <><span style={{ width: "12px", height: "12px", border: "2px solid var(--accent-foreground)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />Saving…</>
-                ) : (
-                  "Save & Continue →"
-                )}
-              </button>
+                {savedOk ? "✓ Saved!" : "Save & Continue →"}
+              </LoadingButton>
             </div>
           </div>
         </div>
