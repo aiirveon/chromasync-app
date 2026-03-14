@@ -47,6 +47,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
   const [interrogation, setInterrogation] = useState<InterrogationAnswers>({ location: "", broken_relationship: "", private_behaviour: "" })
   const [loglineResponse, setLoglineResponse] = useState<LoglineResponse | null>(null)
   const [selectedLogline, setSelectedLogline] = useState<LoglineVersion | null>(null)
+  const [theme, setTheme] = useState<string | null>(null)
   const [characterResponse, setCharacterResponse] = useState<CharacterResponse | null>(null)
   const [characterFields, setCharacterFields] = useState<{ lie: string; want: string; need: string } | null>(null)
   const [characterStcOptions, setCharacterStcOptions] = useState<SaveTheCatOption[] | null>(null)
@@ -91,6 +92,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
       return
     }
 
+    setTheme(data.primal_question ?? null)
     setLoglineResponse(data)
     setStage("logline-forge")
     setLoading(false)
@@ -110,7 +112,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
       if (!dbError && newStory) storyId = newStory.id
     }
     if (storyId) {
-      await updateStory(storyId, { logline: version.logline, logline_label: version.label, stage: 1 })
+      await updateStory(storyId, { logline: version.logline, logline_label: version.label, theme: theme || null, stage: 1 })
       setStory((prev) => prev
         ? { ...prev, logline: version.logline, logline_label: version.label, stage: 1 }
         : { id: storyId!, user_id: "", title: title || null, format, framework, raw_idea: rawIdea, logline: version.logline, logline_label: version.label, character_name: null, character_lie: null, character_want: null, character_need: null, save_the_cat_scene: null, save_the_cat_framing: null, beats: null, stage: 1, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
@@ -213,6 +215,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
       {/* Story Bible — slides in from right */}
       <StoryBible
         story={story}
+        theme={theme}
         completedBeats={completedBeats}
         currentStage={stage}
         onEditLogline={() => setStage("logline-forge")}
@@ -275,7 +278,8 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
             setWoundInputValue(s.wound_answer ?? "")
             setCharacterNameInput(s.character_name ?? "")
 
-            // Restore logline
+            // Restore logline + theme
+            setTheme(s.theme ?? null)
             setSelectedLogline(s.logline ? { logline: s.logline, label: s.logline_label ?? "", angle: "" } : null)
 
             // Restore character fields

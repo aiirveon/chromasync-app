@@ -5,17 +5,18 @@ import type { Story, CompletedBeat } from "@/lib/story"
 
 interface StoryBibleProps {
   story: Story | null
+  theme?: string | null
   completedBeats: CompletedBeat[]
   currentStage: string
   onEditLogline?: () => void
   onEditCharacter?: () => void
 }
 
-export function StoryBible({ story, completedBeats, currentStage, onEditLogline, onEditCharacter }: StoryBibleProps) {
+export function StoryBible({ story, theme, completedBeats, currentStage, onEditLogline, onEditCharacter }: StoryBibleProps) {
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState<string | null>("logline")
 
-  const hasContent = story?.logline || completedBeats.length > 0
+  const hasContent = story?.logline || theme || completedBeats.length > 0
   if (!hasContent) return null
 
   function toggle(s: string) { setExpanded((p) => (p === s ? null : s)) }
@@ -171,6 +172,18 @@ export function StoryBible({ story, completedBeats, currentStage, onEditLogline,
               onEdit={currentStage !== "logline-forge" ? onEditLogline : undefined}
             >
               <p style={{ fontSize: "0.82rem", lineHeight: 1.6, color: "var(--foreground)", margin: 0 }}>{story.logline}</p>
+            </Section>
+          )}
+
+          {theme && (
+            <Section
+              label="Theme"
+              isExpanded={expanded === "theme"}
+              onToggle={() => toggle("theme")}
+            >
+              <p style={{ fontSize: "0.82rem", lineHeight: 1.6, color: "var(--foreground)", margin: 0, fontStyle: "italic" }}>
+                {theme}
+              </p>
             </Section>
           )}
 

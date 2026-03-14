@@ -104,6 +104,8 @@ export interface Story {
   character_need: string | null
   save_the_cat_scene: string | null
   save_the_cat_framing: string | null
+  // Theme (primal question from logline generation)
+  theme: string | null
   // Beats
   beats: any | null
   stage: number
