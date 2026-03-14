@@ -368,6 +368,21 @@
   margin: 0 auto;
 }
 
+/* Story HUD shell — sticky below mobile header, respects sidebar on desktop */
+.story-hud-shell {
+  position: sticky;
+  top: var(--mobile-header-height);
+  z-index: 30;
+}
+
+@media (min-width: 768px) {
+  .story-hud-shell {
+    /* On desktop there is no fixed mobile header, and sidebar is handled by margin-left */
+    top: 0;
+    margin-left: var(--sidebar-width);
+  }
+}
+
 /* Story HUD — scrolls horizontally on tiny screens */
 .story-hud-row {
   display: flex;

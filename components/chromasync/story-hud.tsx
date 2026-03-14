@@ -34,39 +34,65 @@ export function StoryHud({ story }: StoryHudProps) {
 
   return (
     <div
-      className="border-b border-border bg-muted"
-      style={{
-        position: "sticky",
-        top: "var(--mobile-header-height)",
-        zIndex: 30,
-      }}
+      className="story-hud-shell border-b border-border bg-muted"
     >
-      {/* Always-visible bar: format + dots + toggle */}
+      {/* Always-visible bar: format + dots + chevron */}
       <button
         onClick={toggle}
         style={{
           width: "100%",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          gap: "0.75rem",
           padding: "0.45rem 1rem",
           background: "none",
           border: "none",
           cursor: hasDetail ? "pointer" : "default",
           fontFamily: "inherit",
           textAlign: "left",
+          minWidth: 0,
         }}
       >
-        {/* Left: format */}
+        {/* Format badge */}
         <span
           className="text-muted-foreground"
-          style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em" }}
+          style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", flexShrink: 0 }}
         >
-          {story.format === "film" ? "Film" : "Short Story"}
+          {story.format === "film" ? "Film" : "Short"}
         </span>
 
-        {/* Centre: stage dots */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+        {/* Collapsed preview: logline + lie truncated to 1 line each */}
+        {collapsed && hasDetail && (
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.1rem" }}>
+            {story.logline && (
+              <p className="text-foreground" style={{
+                fontSize: "0.7rem",
+                lineHeight: 1.3,
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+                margin: 0,
+              }}>
+                {story.logline}
+              </p>
+            )}
+            {story.character_lie && (
+              <p className="text-muted-foreground" style={{
+                fontSize: "0.65rem",
+                lineHeight: 1.3,
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+                margin: 0,
+              }}>
+                Lie: {story.character_lie}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Stage dots — always visible, pushed to right */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginLeft: "auto", flexShrink: 0 }}>
           {[1, 2, 3, 4, 5, 6, 7].map((s) => (
             <div
               key={s}
@@ -83,12 +109,13 @@ export function StoryHud({ story }: StoryHudProps) {
           ))}
         </div>
 
-        {/* Right: chevron toggle (only if there's detail to show) */}
+        {/* Chevron */}
         {hasDetail && (
           <span
             className="text-muted-foreground"
             style={{
-              fontSize: "0.6rem",
+              fontSize: "0.55rem",
+              flexShrink: 0,
               transition: "transform 0.2s",
               display: "inline-block",
               transform: collapsed ? "rotate(0deg)" : "rotate(180deg)",
@@ -99,51 +126,26 @@ export function StoryHud({ story }: StoryHudProps) {
         )}
       </button>
 
-      {/* Expandable detail */}
+      {/* Expanded detail */}
       {!collapsed && hasDetail && (
         <div style={{
-          padding: "0 1rem 0.6rem",
+          padding: "0 1rem 0.65rem",
           display: "flex",
           flexDirection: "column",
           gap: "0.5rem",
         }}>
           {story.logline && (
             <div>
-              <p
-                className="text-muted-foreground"
-                style={{ fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.15rem" }}
-              >
-                Logline
-              </p>
-              <p className="text-foreground" style={{
-                fontSize: "0.75rem",
-                lineHeight: 1.4,
-                display: "-webkit-box",
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}>
+              <p className="text-muted-foreground" style={{ fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.15rem" }}>Logline</p>
+              <p className="text-foreground" style={{ fontSize: "0.75rem", lineHeight: 1.5, margin: 0 }}>
                 {story.logline}
               </p>
             </div>
           )}
-
           {story.character_lie && (
             <div>
-              <p
-                className="text-muted-foreground"
-                style={{ fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.15rem" }}
-              >
-                The Lie
-              </p>
-              <p className="text-foreground" style={{
-                fontSize: "0.75rem",
-                lineHeight: 1.4,
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}>
+              <p className="text-muted-foreground" style={{ fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.15rem" }}>The Lie</p>
+              <p className="text-foreground" style={{ fontSize: "0.75rem", lineHeight: 1.5, margin: 0 }}>
                 {story.character_lie}
               </p>
             </div>
