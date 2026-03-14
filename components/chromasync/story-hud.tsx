@@ -12,7 +12,12 @@ export function StoryHud({ story }: StoryHudProps) {
   return (
     <div
       className="border-b border-border bg-muted"
-      style={{ padding: "0.5rem 1rem" }}
+      style={{
+        padding: "0.5rem 1rem",
+        position: "sticky",
+        top: "var(--mobile-header-height)",
+        zIndex: 30,
+      }}
     >
       {/* Mobile: stack vertically. Desktop: single row */}
       <div style={{

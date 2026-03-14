@@ -194,7 +194,7 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight: "100dvh", backgroundColor: "var(--background)" }}>
+    <div className="story-shell" style={{ minHeight: "100dvh", backgroundColor: "var(--background)" }}>
       {/* Persistent HUD — visible once logline is locked */}
       {stage !== "cold-open" && stage !== "logline-forge" && (
         <StoryHud story={story} />
