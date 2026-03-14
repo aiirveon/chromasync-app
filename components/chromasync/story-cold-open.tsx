@@ -343,5 +343,6 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
         </div>
       )}
     </div>
+    </>
   )
 }
