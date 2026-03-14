@@ -204,7 +204,7 @@ export function StoryCharacterForge({
           <textarea
             value={woundInput}
             onChange={(e) => onWoundInputChange(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canSubmitWound) onAskWound(woundInput.trim(), characterName.trim()) }}
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canSubmitWound) onAskWound(woundInput.trim(), characterName.trim()) }} // Cmd+Enter still works silently
             placeholder="e.g. She was the only witness to something and no one believed her. She learned that telling the truth costs more than silence."
             disabled={loading}
             rows={4}

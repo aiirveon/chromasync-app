@@ -187,14 +187,16 @@ export function StoryBible({ story, theme, completedBeats, currentStage, onEditL
             </Section>
           )}
 
-          {story?.character_lie && (
+          {(story?.character_name || story?.wound_answer || story?.character_lie) && (
             <Section
               label="Character"
               isExpanded={expanded === "character"}
               onToggle={() => toggle("character")}
-              onEdit={currentStage !== "character-forge" ? onEditCharacter : undefined}
+              onEdit={currentStage !== "character-forge" && story?.character_lie ? onEditCharacter : undefined}
             >
-              <Row label="Lie" value={story.character_lie} />
+              <Row label="Name" value={story.character_name} />
+              <Row label="Wound" value={story.wound_answer} />
+              <Row label="The Lie" value={story.character_lie} />
               <Row label="Want" value={story.character_want} />
               <Row label="Need" value={story.character_need} />
               {story.save_the_cat_scene && <Row label="Save the Cat" value={story.save_the_cat_scene} />}

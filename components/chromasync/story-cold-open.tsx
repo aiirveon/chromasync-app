@@ -234,7 +234,6 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
           {format === "film"
             ? "We'll shape it into a film, one beat at a time."
             : "We'll shape it into a short story, one beat at a time."}
-          {" "}Press ⌘↵ to continue.
         </p>
       </div>
 

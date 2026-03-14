@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Spinner } from "./ui"
 import {
   regenerateSingleLogline,
+  generateThemeSuggestions,
   type LoglineResponse,
   type LoglineVersion,
   type StoryFormat,
@@ -17,6 +18,8 @@ interface StoryLoglineForgeProps {
   format: StoryFormat
   framework: StoryFramework
   interrogation: InterrogationAnswers
+  initialTheme?: string | null
+  onThemeChange?: (theme: string) => void
   onSelect: (version: LoglineVersion) => void
   onBack: () => void
   loading?: boolean
@@ -28,6 +31,8 @@ export function StoryLoglineForge({
   format,
   framework,
   interrogation,
+  initialTheme,
+  onThemeChange,
   onSelect,
   onBack,
   loading = false,
@@ -39,6 +44,27 @@ export function StoryLoglineForge({
   const [refreshingIndex, setRefreshingIndex] = useState<number | null>(null)
   const [showCustom, setShowCustom] = useState(false)
   const [customLogline, setCustomLogline] = useState("")
+
+  // Theme state
+  const [themeValue, setThemeValue] = useState(initialTheme ?? response.primal_question ?? "")
+  const [themeSuggestions, setThemeSuggestions] = useState<string[]>([])
+  const [loadingTheme, setLoadingTheme] = useState(false)
+  const [themeRequested, setThemeRequested] = useState(false)
+
+  function handleThemeChange(val: string) {
+    setThemeValue(val)
+    onThemeChange?.(val)
+  }
+
+  async function requestThemeSuggestions() {
+    if (loadingTheme) return
+    setLoadingTheme(true)
+    setThemeRequested(true)
+    const existingLoglines = versions.map((v) => v.logline)
+    const { data } = await generateThemeSuggestions(rawIdea, format, framework, interrogation, existingLoglines, themeValue)
+    if (data) setThemeSuggestions(data.suggestions)
+    setLoadingTheme(false)
+  }
 
   const labelColours: Record<string, string> = {
     "External Stakes": "var(--accent)",
@@ -129,25 +155,84 @@ export function StoryLoglineForge({
         Pick one, edit it, refresh it — or write your own below.
       </p>
 
-      {/* Primal question */}
-      <div
-        className="bg-muted border-accent"
-        style={{
-          margin: "1.5rem 0",
-          padding: "1rem 1.25rem",
-          borderRadius: "var(--radius)",
-          borderLeft: "2px solid var(--accent)",
-        }}
-      >
-        <p
-          className="text-muted-foreground"
-          style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}
-        >
-          Before you choose — sit with this
-        </p>
-        <p className="text-foreground" style={{ fontSize: "0.875rem", lineHeight: 1.5, fontStyle: "italic" }}>
-          {response.primal_question}
-        </p>
+      {/* Theme — editable primal question */}
+      <div style={{ margin: "1.5rem 0", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: "0.4rem" }}>
+          <p className="text-muted-foreground" style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            Theme
+          </p>
+          <p className="text-muted-foreground" style={{ fontSize: "0.65rem" }}>The question your story is answering</p>
+        </div>
+        <textarea
+          value={themeValue}
+          onChange={(e) => handleThemeChange(e.target.value)}
+          rows={2}
+          style={{
+            width: "100%",
+            backgroundColor: "var(--muted)",
+            color: "var(--foreground)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius)",
+            padding: "0.65rem 0.75rem",
+            fontSize: "0.82rem",
+            lineHeight: 1.5,
+            resize: "vertical",
+            outline: "none",
+            fontFamily: "inherit",
+            fontStyle: "italic",
+            transition: "border-color 0.15s",
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)" }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)" }}
+        />
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          <button
+            onClick={requestThemeSuggestions}
+            disabled={loadingTheme}
+            className="text-muted-foreground"
+            style={{
+              alignSelf: "flex-start",
+              padding: "0.3rem 0.75rem",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--border)",
+              backgroundColor: "transparent",
+              fontSize: "0.72rem",
+              cursor: loadingTheme ? "not-allowed" : "pointer",
+              fontFamily: "inherit",
+              display: "flex", alignItems: "center", gap: "0.4rem",
+            }}
+          >
+            {loadingTheme ? <><Spinner size="sm" /> Suggesting…</> : themeRequested ? "↻ Refresh" : "Suggest"}
+          </button>
+          {themeSuggestions.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+              {themeSuggestions.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleThemeChange(s)}
+                  style={{
+                    textAlign: "left",
+                    padding: "0.5rem 0.75rem",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid",
+                    borderColor: themeValue === s ? "var(--accent)" : "var(--border)",
+                    backgroundColor: themeValue === s ? "color-mix(in srgb, var(--accent) 10%, var(--card))" : "var(--card)",
+                    color: themeValue === s ? "var(--foreground)" : "var(--muted-foreground)",
+                    fontSize: "0.78rem",
+                    lineHeight: 1.4,
+                    fontStyle: "italic",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    transition: "all 0.15s",
+                    width: "100%",
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Logline cards */}

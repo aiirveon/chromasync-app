@@ -347,6 +347,8 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
           format={format}
           framework={framework}
           interrogation={interrogation}
+          initialTheme={theme}
+          onThemeChange={setTheme}
           onSelect={handleSelectLogline}
           onBack={() => setStage("interrogation")}
           loading={loading}
