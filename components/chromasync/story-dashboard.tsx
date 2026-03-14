@@ -54,11 +54,15 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
   // ─── Stage 0 → 1 ──────────────────────────────────────────────────────────
 
   // Stage 0 → interrogation
-  function handleBegin(idea: string, fmt: StoryFormat, fw: StoryFramework, ttl: string) {
+  function handleBegin(idea: string, fmt: StoryFormat, fw: StoryFramework, ttl: string, savedStoryId?: string) {
     setRawIdea(idea)
     setFormat(fmt)
     setFramework(fw)
     setTitle(ttl)
+    // If story was already saved in the modal, set it now so autosave works immediately
+    if (savedStoryId) {
+      setStory({ id: savedStoryId, user_id: "", title: ttl || null, format: fmt, framework: fw, raw_idea: idea, logline: null, logline_label: null, character_name: null, character_lie: null, character_want: null, character_need: null, save_the_cat_scene: null, save_the_cat_framing: null, beats: null, stage: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    }
     setStage("interrogation")
   }
 
@@ -87,17 +91,18 @@ export function StoryDashboard({ activeTab = "generate", onTabChange }: StoryDas
     setLoading(true)
     setSelectedLogline(version)
 
-    // Create the story record in Supabase
-    const { story: newStory, error: dbError } = await createStory(format, rawIdea, title || undefined, framework)
-    if (dbError || !newStory) {
-      console.warn("Could not save story:", dbError)
-    } else {
-      await updateStory(newStory.id, {
-        logline: version.logline,
-        logline_label: version.label,
-        stage: 1,
-      })
-      setStory({ ...newStory, logline: version.logline, logline_label: version.label, stage: 1 })
+    // If story already saved from modal, just update it. Otherwise create it now.
+    let storyId = story?.id
+    if (!storyId) {
+      const { story: newStory, error: dbError } = await createStory(format, rawIdea, title || undefined, framework)
+      if (!dbError && newStory) storyId = newStory.id
+    }
+    if (storyId) {
+      await updateStory(storyId, { logline: version.logline, logline_label: version.label, stage: 1 })
+      setStory((prev) => prev
+        ? { ...prev, logline: version.logline, logline_label: version.label, stage: 1 }
+        : { id: storyId!, user_id: "", title: title || null, format, framework, raw_idea: rawIdea, logline: version.logline, logline_label: version.label, character_name: null, character_lie: null, character_want: null, character_need: null, save_the_cat_scene: null, save_the_cat_framing: null, beats: null, stage: 1, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+      )
     }
 
     setStage("character-forge")

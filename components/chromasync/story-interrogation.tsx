@@ -114,7 +114,7 @@ export function StoryInterrogation({
 
   function applySuggestion(index: number, suggestion: string) {
     setQuestions((prev) =>
-      prev.map((q, i) => (i === index ? { ...q, value: suggestion } : q))
+      prev.map((q, i) => (i === index ? { ...q, value: suggestion, locked: true } : q))
     )
   }
 

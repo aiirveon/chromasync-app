@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import type { StoryFormat, StoryFramework } from "@/lib/story"
+import { createStory, type StoryFormat, type StoryFramework } from "@/lib/story"
 import { StoryFrameworkPicker } from "./story-framework-picker"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://chromasync-api.onrender.com"
 
 interface StoryColdOpenProps {
-  onBegin: (rawIdea: string, format: StoryFormat, framework: StoryFramework, title: string) => void
+  onBegin: (rawIdea: string, format: StoryFormat, framework: StoryFramework, title: string, storyId?: string) => void
   loading?: boolean
 }
 
@@ -40,14 +40,17 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
 
   async function handleSaveAndContinue() {
     setSaving(true)
-    // Small delay so user sees the saving state
-    await new Promise((r) => setTimeout(r, 400))
+    // Save to Supabase immediately
+    const { story, error } = await createStory(format, rawIdea.trim(), title.trim() || undefined, framework)
+    if (error) {
+      console.warn("Could not save story:", error)
+    }
     setSaving(false)
     setSavedOk(true)
-    await new Promise((r) => setTimeout(r, 600))
+    await new Promise((r) => setTimeout(r, 700))
     setShowSaveModal(false)
     setSavedOk(false)
-    onBegin(rawIdea.trim(), format, framework, title.trim())
+    onBegin(rawIdea.trim(), format, framework, title.trim(), story?.id)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -57,6 +60,7 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
   }
 
   return (
+    <>
     <div
       className="story-stage"
       style={{ alignItems: "center", justifyContent: "center" }}
