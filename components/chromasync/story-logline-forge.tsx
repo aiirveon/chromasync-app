@@ -156,83 +156,37 @@ export function StoryLoglineForge({
       </p>
 
       {/* Theme — editable primal question */}
-      <div style={{ margin: "1.5rem 0", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: "0.4rem" }}>
-          <p className="text-muted-foreground" style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            Theme
-          </p>
-          <p className="text-muted-foreground" style={{ fontSize: "0.65rem" }}>The question your story is answering</p>
+      <div className="story-theme">
+        <div className="story-theme__row">
+          <span className="story-theme__label">Theme</span>
+          <button
+            className="story-theme__suggest"
+            onClick={requestThemeSuggestions}
+            disabled={loadingTheme}
+          >
+            {loadingTheme ? <><Spinner size="sm" /> Suggesting…</> : themeRequested ? "↻ new suggestions" : "suggest"}
+          </button>
         </div>
         <textarea
+          className="story-theme__input"
           value={themeValue}
           onChange={(e) => handleThemeChange(e.target.value)}
           rows={2}
-          style={{
-            width: "100%",
-            backgroundColor: "var(--muted)",
-            color: "var(--foreground)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius)",
-            padding: "0.65rem 0.75rem",
-            fontSize: "0.82rem",
-            lineHeight: 1.5,
-            resize: "vertical",
-            outline: "none",
-            fontFamily: "inherit",
-            fontStyle: "italic",
-            transition: "border-color 0.15s",
-          }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)" }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)" }}
+          placeholder="The question your story is answering…"
         />
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-          <button
-            onClick={requestThemeSuggestions}
-            disabled={loadingTheme}
-            className="text-muted-foreground"
-            style={{
-              alignSelf: "flex-start",
-              padding: "0.3rem 0.75rem",
-              borderRadius: "var(--radius)",
-              border: "1px solid var(--border)",
-              backgroundColor: "transparent",
-              fontSize: "0.72rem",
-              cursor: loadingTheme ? "not-allowed" : "pointer",
-              fontFamily: "inherit",
-              display: "flex", alignItems: "center", gap: "0.4rem",
-            }}
-          >
-            {loadingTheme ? <><Spinner size="sm" /> Suggesting…</> : themeRequested ? "↻ Refresh" : "Suggest"}
-          </button>
-          {themeSuggestions.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
-              {themeSuggestions.map((s, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleThemeChange(s)}
-                  style={{
-                    textAlign: "left",
-                    padding: "0.5rem 0.75rem",
-                    borderRadius: "var(--radius)",
-                    border: "1px solid",
-                    borderColor: themeValue === s ? "var(--accent)" : "var(--border)",
-                    backgroundColor: themeValue === s ? "color-mix(in srgb, var(--accent) 10%, var(--card))" : "var(--card)",
-                    color: themeValue === s ? "var(--foreground)" : "var(--muted-foreground)",
-                    fontSize: "0.78rem",
-                    lineHeight: 1.4,
-                    fontStyle: "italic",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    transition: "all 0.15s",
-                    width: "100%",
-                  }}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {themeSuggestions.length > 0 && (
+          <div className="story-theme__chips">
+            {themeSuggestions.map((s, i) => (
+              <button
+                key={i}
+                className={`story-theme__chip${themeValue === s ? " story-theme__chip--selected" : ""}`}
+                onClick={() => handleThemeChange(s)}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Logline cards */}
