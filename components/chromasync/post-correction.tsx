@@ -34,12 +34,17 @@ export function PostCorrection() {
   const [result, setResult] = useState<PostCorrectionResponse | null>(null)
   const [lutLoading, setLutLoading] = useState<number | null>(null)
   const [lutError, setLutError] = useState<string | null>(null)
+  const [referencePreview, setReferencePreview] = useState<string | null>(null)
   const refInputRef = useRef<HTMLInputElement>(null)
   const scenesInputRef = useRef<HTMLInputElement>(null)
 
   function onReferenceChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (file) setReference(file)
+    if (file) {
+      setReference(file)
+      const url = URL.createObjectURL(file)
+      setReferencePreview(url)
+    }
   }
 
   function onScenesChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -94,13 +99,35 @@ export function PostCorrection() {
           onClick={() => refInputRef.current?.click()}
         >
           <input ref={refInputRef} type="file" accept="image/*" className="hidden" onChange={onReferenceChange} />
-          {reference ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-2">
-              <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                <ImageIcon className="w-5 h-5 text-accent" />
+          {reference && referencePreview ? (
+            <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+              <img
+                src={referencePreview}
+                alt="Reference frame"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: "calc(var(--radius) - 2px)",
+                  display: "block",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 50%)",
+                  borderRadius: "calc(var(--radius) - 2px)",
+                  display: "flex",
+                  alignItems: "flex-end",
+                  padding: "0.6rem 0.75rem",
+                  gap: "0.4rem",
+                }}
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-white/80" style={{ flexShrink: 0 }} />
+                <p className="text-xs text-white/90 truncate" style={{ flex: 1 }}>{reference.name}</p>
+                <p className="text-xs text-white/60 flex-shrink-0">Click to change</p>
               </div>
-              <p className="text-sm font-medium text-foreground">{reference.name}</p>
-              <p className="text-xs text-muted-foreground">Click to change</p>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12">
