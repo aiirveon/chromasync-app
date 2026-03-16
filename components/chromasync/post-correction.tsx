@@ -21,8 +21,8 @@ function getStatusBadge(status: string) {
 }
 
 function getDeltaColor(delta: number) {
-  if (delta < 2.0) return "drift-good"
-  if (delta < 5.0) return "drift-warn"
+  if (delta < 5.0) return "drift-good"
+  if (delta < 15.0) return "drift-warn"
   return "drift-bad"
 }
 
