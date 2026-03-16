@@ -1,5 +1,5 @@
 # Metrics Framework
-## ChromaSync Story Engine
+## Ojuit
 **Author:** Ogbebor Osaheni  
 **Last Updated:** March 2026
 
@@ -52,9 +52,22 @@ The percentage of API calls that return a non-200 response or a malformed JSON p
 
 ---
 
+## Colour Product Metrics
+
+**Delta E below 5 on diverse test clips**
+The primary quality metric for the Colour product. A scene that scores below 5 Delta E against the reference is within professional continuity standards. Target: 10 diverse test clips all scoring below 5 Delta E after XGBoost correction values are applied.
+
+**LUT adoption rate**
+The percentage of post correction sessions where the user downloads at least one LUT. Target: above 30%. Low adoption indicates either the feature is not discoverable or users do not trust the correction enough to use it in their grade.
+
+**Override rate**
+The percentage of XGBoost correction values where the user manually adjusts before applying. Target below 40%. Above 40% signals the model is misaligned with creative intent. Below 25% means filmmakers trust the corrections strongly.
+
+---
+
 ## Measurement Approach for V1
 
-All primary and secondary metrics are measured through Supabase query analysis on the stories table. Stage completion is inferred from which columns are populated: a story with character_lie filled has passed character forge, a story with beats populated has at least started the beat board.
+All primary and secondary story metrics are measured through Supabase query analysis on the stories table. Stage completion is inferred from which columns are populated: a story with character_lie filled has passed character forge, a story with beats populated has at least started the beat board.
 
 Suggestion adoption and theme edit rate require frontend event tracking, which is not implemented in V1. These will be estimated through user interviews until proper analytics are added.
 

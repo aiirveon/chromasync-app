@@ -1,5 +1,5 @@
 # User Flow
-## ChromaSync Story Engine
+## Ojuit
 **Author:** Ogbebor Osaheni
 **Last Updated:** March 2026
 
@@ -7,7 +7,7 @@
 
 ## Overview
 
-The ChromaSync Story Engine guides a writer through six stages from a raw idea to a full beat sheet. Every stage unlocks only after the previous one has a committed answer. The writer can leave at any point and resume from exactly where they stopped.
+The Ojuit Story Engine guides a writer through six stages from a raw idea to a full beat sheet. Every stage unlocks only after the previous one has a committed answer. The writer can leave at any point and resume from exactly where they stopped.
 
 ---
 
@@ -15,7 +15,7 @@ The ChromaSync Story Engine guides a writer through six stages from a raw idea t
 
 ```mermaid
 flowchart TD
-    A([User arrives at ChromaSync]) --> B{Signed in?}
+    A([User arrives at Ojuit]) --> B{Signed in?}
     B -- No --> C[Magic link auth\nEnter email, click link]
     B -- Yes --> D[Story Mode homepage]
     C --> D
@@ -148,3 +148,74 @@ Character forge state is lifted to the dashboard level. Clicking back from chara
 
 **Beat board shows completed beats as done**
 On resume, previously completed beats are shown with a visual done state. The writer picks up exactly at the first incomplete beat without scrolling through work already done.
+
+**Specificity nudge on Cold Open**
+A persistent message below the raw idea textarea is always visible: the more specific the input, the more grounded every downstream suggestion will be. This sets expectations without blocking the user.
+
+---
+
+## Colour Product User Flow
+
+```mermaid
+flowchart TD
+    A([User opens Colour mode]) --> B[Select tab]
+    B --> C[Pre-Shoot]
+    B --> D[On-Shoot]
+    B --> E[Post Correction]
+
+    C --> C1[Optional: select camera from list]
+    C1 --> C2[Upload reference frame]
+    C2 --> C3[API analyses frame in CIE Lab space]
+    C3 --> C4[Returns colour profile
+temp, exposure, saturation, contrast]
+    C4 --> C5[Returns camera settings
+white balance, ISO, picture profile]
+    C5 --> C6{User action}
+    C6 -- Save look --> C7[Save modal
+Name session, assign to project]
+    C6 -- Go to On-Shoot --> D
+
+    D --> D1[Select reference
+Current unsaved or saved session]
+    D1 --> D2[Upload live frame from set]
+    D2 --> D3[API compares live vs reference
+in CIE Lab colour space]
+    D3 --> D4[Returns per-parameter drift
+white balance, exposure, saturation,
+contrast, colour cast, tonal distribution]
+    D4 --> D5[Overall status
+On Target / Slight Drift / Significant Drift]
+    D5 --> D6[User adjusts camera settings on set]
+
+    E --> E1[Upload reference frame]
+    E1 --> E2[Upload scene frames
+up to 20 scenes]
+    E2 --> E3[Click Analyse Footage]
+    E3 --> E4[API runs Delta E per scene
+XGBoost correction predictions per scene]
+    E4 --> E5[Results table
+Delta E, status, temp, exposure per scene]
+    E5 --> E6{Per scene}
+    E6 -- Accepted Delta E below 5 --> E7[No correction needed]
+    E6 -- Corrected Delta E 5 to 15 --> E8[Minor post correction needed]
+    E6 -- Needs Review Delta E above 15 --> E9[Significant correction needed]
+    E6 -- Download LUT --> E10[POST to /api/colour/lut
+Polynomial Lab mapping
+scene to reference]
+    E10 --> E11[Browser downloads .cube file
+Filename: scenename_ojuit.cube]
+    E11 --> E12[Import into DaVinci Resolve
+or Premiere Pro]
+```
+
+## Colour Product Stage Summary
+
+| Tab | User action | AI output |
+|---|---|---|
+| Pre-Shoot | Upload reference frame | Colour profile, camera settings recommendations |
+| On-Shoot | Upload live frame against reference | Per-parameter drift analysis, overall status |
+| Post Correction | Upload reference and up to 20 scenes | Delta E per scene, XGBoost correction values, downloadable LUT |
+
+## LUT Download Flow
+
+The Download LUT button appears in each scene row of the Post Correction results table. On mobile it renders as a full-width button below each scene card. Clicking it sends a POST request to `/api/colour/lut` with the scene file and the reference file. The backend samples colour distributions from both images in Lab space, fits a polynomial mapping per channel, and returns a `.cube` file. The browser triggers a download automatically. The filename uses the scene file name with `_ojuit.cube` appended so the filmmaker knows exactly which scene each LUT corrects.

@@ -1,5 +1,5 @@
 # System Architecture
-## ChromaSync
+## Ojuit
 **Author:** Ogbebor Osaheni
 **Last Updated:** March 2026
 
@@ -7,7 +7,7 @@
 
 ## Overview
 
-ChromaSync is a two-product platform built across two repositories and three cloud services. The frontend handles all user interaction and state management. The backend handles all AI prompt orchestration. The database handles persistence and authentication. The three services communicate over HTTPS and are deployed independently.
+Ojuit is a two-product platform built across two repositories and three cloud services. The frontend handles all user interaction and state management. The backend handles all AI prompt orchestration. The database handles persistence and authentication. The three services communicate over HTTPS and are deployed independently.
 
 ---
 
@@ -17,15 +17,16 @@ ChromaSync is a two-product platform built across two repositories and three clo
 graph TD
     User["User (Browser / Mobile)"]
 
-    subgraph Frontend ["Frontend — chromasync-app (Vercel)"]
+    subgraph Frontend ["Frontend — ojuit-app (Vercel)"]
         NextJS["Next.js 15 / TypeScript"]
         CSS["Unified CSS Design System\n(CSS custom properties, :root)"]
         State["Component State\n(React useState, lifted to dashboard)"]
     end
 
-    subgraph Backend ["Backend — chromasync-api (Render)"]
+    subgraph Backend ["Backend — ojuit-api (Render)"]
         FastAPI["FastAPI / Python"]
         Prompts["Prompt Chain Layer\n(AVOID_LIST, context assembly)"]
+        XGB["XGBoost Colour Correction Model\n(trains at startup if not present)"]
         Health["Health Endpoint\n(/health — cold start wake)"]
     end
 
@@ -43,6 +44,7 @@ graph TD
     NextJS -->|"Supabase client"| Stories
     NextJS -->|"Magic link"| Auth
     FastAPI --> Prompts
+    FastAPI --> XGB
     FastAPI -->|"Silent ping on mount"| Health
     Prompts -->|"Structured JSON prompts"| Claude
     Claude -->|"JSON responses"| Prompts
@@ -53,17 +55,17 @@ graph TD
 
 ## Services
 
-**Frontend: chromasync-app**
+**Frontend: ojuit-app**
 Repository: github.com/aiirveon/chromasync-app
 Deployment: Vercel (automatic on push to main)
 Stack: Next.js 15, TypeScript, Tailwind CSS, Supabase JS client
-Responsibility: All user interaction, component state, CSS design system, routing between story stages, Supabase reads and writes
+Responsibility: All user interaction, component state, CSS design system, routing between story stages, Supabase reads and writes, LUT file download, Delta E results display
 
-**Backend: chromasync-api**
+**Backend: ojuit-api**
 Repository: github.com/aiirveon/chromasync-api
 Deployment: Render free tier (spins down after inactivity)
-Stack: FastAPI, Python, Anthropic SDK
-Responsibility: All AI prompt orchestration, AVOID_LIST injection, context assembly per endpoint, JSON response validation
+Stack: FastAPI, Python, Anthropic SDK, XGBoost, OpenCV, scikit-learn
+Responsibility: All AI prompt orchestration, AVOID_LIST injection, context assembly per endpoint, JSON response validation, colour analysis, Delta E computation, LUT generation, XGBoost correction predictions
 
 **Database: Supabase**
 Project: zgzpaadvnzpbxrvgwvns
@@ -73,6 +75,12 @@ Responsibility: Story persistence, user authentication, row-level security
 **AI: Anthropic Claude API**
 Model: claude-opus-4-5
 Responsibility: Logline generation, interrogation suggestions, character psychology, beat questions and suggestions, theme suggestions
+
+**ML: XGBoost Colour Correction Model**
+Training: 8,000 synthetic scenes across four drift types — standard, mixed lighting, LOG profile compression, harsh clipping
+Features: 14 features covering scene and reference colour profiles
+Targets: 6 correction values — correct_r, correct_g, correct_b, correct_exposure_ev, correct_temp_k, correct_saturation
+Deployment: Trains automatically at API startup if model file is not present. Falls back to raw delta calculations if training fails.
 
 ---
 
@@ -95,6 +103,15 @@ Render's free tier shuts down the API after inactivity. The frontend sends a sil
 
 **CSS design system**
 All visual tokens (colours, spacing, border radius, layout heights) are defined as CSS custom properties in a single :root declaration in globals.css. No component contains hardcoded colour or spacing values. Changing a token in :root updates the entire application.
+
+**CIE Lab Delta E**
+All colour difference calculations use CIE Lab colour space, not RGB Euclidean distance. Lab space is perceptually uniform: equal numerical distances correspond to equal perceived colour differences. Delta E below 5 is the professional continuity threshold. The previous implementation using RGB Euclidean distance was replaced because it produced misleading scores — two similar images could score Delta E of 130 in RGB space while being visually close.
+
+**Scene-to-reference LUT generation**
+The LUT endpoint samples colour distributions from both scene and reference frames in Lab colour space. It fits a degree-2 polynomial mapping from scene Lab values to reference Lab values per channel. This captures non-linear colour relationships between frames. The output is a 33x33x33 `.cube` file — the industry standard format for DaVinci Resolve and Premiere Pro.
+
+**Beta banner and cold start UX**
+A persistent banner at the top of the app shows warming up state when the API is dormant and switches to live once the health ping responds. This sets user expectations correctly and reduces perceived failures on first load.
 
 ---
 

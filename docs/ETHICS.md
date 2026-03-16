@@ -1,5 +1,5 @@
 # Ethics Framework
-## ChromaSync Story Engine
+## Ojuit
 **Author:** Ogbebor Osaheni  
 **Last Updated:** March 2026
 
@@ -9,7 +9,7 @@
 
 The story belongs to the writer. Always.
 
-ChromaSync Story Engine is a guided discovery tool. The AI asks questions, offers suggestions when invited, and surfaces structure. The writer commits every answer. No output from the AI is ever applied to the writer's story without an explicit action from the writer. This is not a design constraint imposed after the fact. It is the foundational product decision from which every other ethical consideration flows.
+Ojuit Story Engine is a guided discovery tool. The AI asks questions, offers suggestions when invited, and surfaces structure. The writer commits every answer. No output from the AI is ever applied to the writer's story without an explicit action from the writer. This is not a design constraint imposed after the fact. It is the foundational product decision from which every other ethical consideration flows.
 
 ---
 
@@ -18,8 +18,8 @@ ChromaSync Story Engine is a guided discovery tool. The AI asks questions, offer
 **What it is**  
 Large language models trained on vast amounts of human writing develop strong statistical preferences for certain story patterns. Without intervention, an AI asked to help develop a story will tend toward the same wounds (absent or dead parent, survivor's guilt), the same structures (chosen one accepts destiny, loner learns to love again) and the same resolutions (protagonist gives a speech, misunderstanding resolved by honest conversation). A product that reinforces these patterns at scale makes storytelling worse, not better.
 
-**Why it matters for ChromaSync**  
-If every writer using ChromaSync ends up with a story about an orphan who accepts their destiny and gives a speech at the end, the product has failed its core purpose. Diversity of story is the whole point.
+**Why it matters for Ojuit**  
+If every writer using Ojuit ends up with a story about an orphan who accepts their destiny and gives a speech at the end, the product has failed its core purpose. Diversity of story is the whole point.
 
 **What we do about it**  
 Every prompt sent to the AI includes the AVOID_LIST: a set of explicit negative constraints that block the most overused AI story defaults. The list covers overused wounds, overused structures, and overused resolution shapes. It is injected silently into every generation call, not shown to the user. The instruction is always the same: find the specific, surprising, human truth inside this writer's idea.
@@ -86,6 +86,8 @@ Suggestions appear only when the writer clicks a suggest button. The default sta
 
 ## What This Framework Does Not Cover
 
-This framework covers ethical risks in the design and operation of the product. It does not cover the content of stories that writers develop using ChromaSync. Writers are free to develop stories about any subject. ChromaSync does not moderate story content, and does not intend to.
+This framework covers ethical risks in the design and operation of the product. It does not cover the content of stories that writers develop using Ojuit. Writers are free to develop stories about any subject. Ojuit does not moderate story content, and does not intend to.
+
+**Colour product addition:** The XGBoost correction model is trained on synthetic colour drift data covering colour temperatures from 2700K to 8000K but has not been validated against real diverse footage across all skin tones. Full bias validation is deferred to V2. The LUT generation uses perceptually uniform CIE Lab space which treats all colours consistently regardless of skin tone, reducing but not eliminating potential bias.
 
 This framework will be reviewed and updated after the first cohort of real users completes the full six-stage flow. Ethical risks that only become visible at scale cannot be anticipated in V1 documentation.
