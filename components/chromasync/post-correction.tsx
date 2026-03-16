@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Film, ImageIcon, Search, Loader2, Plus, X } from "lucide-react"
+import { Film, ImageIcon, Search, Loader2, Plus, X, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { analyseFootage, PostCorrectionResponse } from "@/lib/api"
+import { analyseFootage, downloadLut, PostCorrectionResponse } from "@/lib/api"
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -32,6 +32,8 @@ export function PostCorrection() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<PostCorrectionResponse | null>(null)
+  const [lutLoading, setLutLoading] = useState<number | null>(null)
+  const [lutError, setLutError] = useState<string | null>(null)
   const refInputRef = useRef<HTMLInputElement>(null)
   const scenesInputRef = useRef<HTMLInputElement>(null)
 
@@ -47,6 +49,21 @@ export function PostCorrection() {
 
   function removeScene(index: number) {
     setScenes((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  async function handleDownloadLut(sceneIndex: number) {
+    if (!reference) return
+    const sceneFile = scenes[sceneIndex]
+    if (!sceneFile) return
+    setLutLoading(sceneIndex)
+    setLutError(null)
+    try {
+      await downloadLut(sceneFile, reference)
+    } catch (e: any) {
+      setLutError(`LUT failed for scene ${sceneIndex + 1}. Try again.`)
+    } finally {
+      setLutLoading(null)
+    }
   }
 
   async function handleAnalyse() {
@@ -153,23 +170,54 @@ export function PostCorrection() {
               {/* Horizontal scroll on mobile for the data table */}
               <div className="overflow-x-auto">
               <div className="divide-y divide-border min-w-[480px]">
-                <div className="grid grid-cols-6 gap-4 px-4 py-2 text-xs text-muted-foreground bg-secondary/50">
-                  <div>Scene</div><div>Name</div><div>Temp</div><div>Exposure</div><div>ΔE Drift</div><div>Status</div>
+                <div className="grid grid-cols-7 gap-3 px-4 py-2 text-xs text-muted-foreground bg-secondary/50">
+                  <div>Scene</div><div>Name</div><div>Temp</div><div>Exposure</div><div>ΔE Drift</div><div>Status</div><div>LUT</div>
                 </div>
                 {result.scenes.map((scene) => (
-                  <div key={scene.scene_number} className="grid grid-cols-6 gap-4 px-4 py-3 items-center hover:bg-secondary/30 transition-colors">
+                  <div key={scene.scene_number} className="grid grid-cols-7 gap-3 px-4 py-3 items-center hover:bg-secondary/30 transition-colors">
                     <div className="mono-value text-sm text-foreground">{String(scene.scene_number).padStart(3, "0")}</div>
                     <div className="text-xs text-muted-foreground truncate">{scene.scene_name}</div>
                     <div className="mono-value text-sm text-foreground">{scene.temperature}</div>
                     <div className="mono-value text-sm text-foreground">{scene.exposure}</div>
                     <div className={`mono-value text-sm font-medium ${getDeltaColor(scene.delta_e)}`}>{scene.delta_e}</div>
                     <div>{getStatusBadge(scene.status)}</div>
+                    <div>
+                      <button
+                        onClick={() => handleDownloadLut(scene.scene_number - 1)}
+                        disabled={lutLoading === scene.scene_number - 1}
+                        title="Download correction LUT for DaVinci Resolve or Premiere Pro"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.25rem",
+                          padding: "0.25rem 0.5rem",
+                          borderRadius: "var(--radius)",
+                          border: "1px solid var(--border)",
+                          backgroundColor: "transparent",
+                          color: lutLoading === scene.scene_number - 1 ? "var(--muted-foreground)" : "var(--accent)",
+                          fontSize: "0.7rem",
+                          cursor: lutLoading === scene.scene_number - 1 ? "not-allowed" : "pointer",
+                          fontFamily: "inherit",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {lutLoading === scene.scene_number - 1
+                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          : <Download className="w-3 h-3" />
+                        }
+                        {lutLoading === scene.scene_number - 1 ? "" : ".cube"}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
             </CardContent>
           </Card>
+
+          {lutError && (
+            <div className="p-3 rounded border border-destructive/30 bg-destructive/10 text-sm text-destructive">{lutError}</div>
+          )}
 
           <Card className="bg-card border-border">
             <CardHeader className="pb-3">

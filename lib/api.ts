@@ -197,3 +197,33 @@ export interface PostCorrectionResponse {
     reference_exposure: string
   }
 }
+
+export async function downloadLut(scene: File, reference: File): Promise<void> {
+  const formData = new FormData()
+  formData.append("scene", scene)
+  formData.append("reference", reference)
+
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://chromasync-api.onrender.com"
+  const res = await fetch(`${API_BASE}/api/colour/lut`, {
+    method: "POST",
+    body: formData,
+  })
+
+  if (!res.ok) throw new Error("LUT generation failed")
+
+  // Get filename from Content-Disposition header or use fallback
+  const disposition = res.headers.get("content-disposition") ?? ""
+  const match = disposition.match(/filename="?([^"]+)"?/)
+  const filename = match?.[1] ?? "chromasync_correction.cube"
+
+  // Trigger browser download
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
