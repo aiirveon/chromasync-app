@@ -33,6 +33,8 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
   const [savedOk, setSavedOk] = useState(false)
 
   const canProceed = rawIdea.trim().length > 10 && !loading
+  const wordCount = rawIdea.trim() === "" ? 0 : rawIdea.trim().split(/\s+/).length
+  const showNudge = rawIdea.trim().length > 3 && wordCount < 6
 
   function handleSubmit() {
     if (!canProceed) return
@@ -132,6 +134,21 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
           onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)" }}
           onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)" }}
         />
+
+        {/* Specificity nudge — appears when input is sparse */}
+        {showNudge && (
+          <p
+            className="text-muted-foreground"
+            style={{
+              fontSize: "0.72rem",
+              marginTop: "0.6rem",
+              lineHeight: 1.5,
+              transition: "opacity 0.2s",
+            }}
+          >
+            The more specific you are here, the more grounded every suggestion will be. A person, a place, a conflict works better than a title alone.
+          </p>
+        )}
 
         {/* Format picker + submit row */}
         <div
