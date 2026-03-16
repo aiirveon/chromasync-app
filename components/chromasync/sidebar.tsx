@@ -116,17 +116,8 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
     >
       {/* Logo + mode switcher */}
       <div className="p-4 border-b border-sidebar-border shrink-0 space-y-3">
-        <div className="flex items-center gap-2.5">
-          <div className="relative w-8 h-8 shrink-0">
-            <svg viewBox="0 0 32 32" className="w-full h-full">
-              <circle cx="16" cy="16" r="14" fill="none" stroke="var(--accent)" strokeWidth="2" />
-              <circle cx="16"  cy="8"  r="3" fill="var(--destructive)" />
-              <circle cx="22.9" cy="20" r="3" fill="var(--success)" />
-              <circle cx="9.1"  cy="20" r="3" fill="var(--info)" />
-              <circle cx="16"  cy="16" r="4" fill="var(--accent)" />
-            </svg>
-          </div>
-          <span className="text-lg font-semibold text-sidebar-foreground">ChromaSync</span>
+        <div className="flex items-center">
+          <span className="wordmark text-xl text-sidebar-foreground">Ojuit</span>
         </div>
         <ModeSwitcher mode={appMode} onChange={onAppModeChange} />
       </div>

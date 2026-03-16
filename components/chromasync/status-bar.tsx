@@ -61,7 +61,7 @@ export function StatusBar({ processingState = "Ready" }: StatusBarProps) {
         </div>
       </div>
       <div className="ml-auto">
-        <span>ChromaSync v1.0.0</span>
+        <span className="wordmark" style={{ fontSize: "0.7rem" }}>Ojuit</span>
       </div>
     </footer>
   )

@@ -99,6 +99,11 @@
   --content-padding-x:     1rem;
   --content-padding-y:     1.25rem;
 
+  /* Wordmark */
+  --wordmark-weight:       800;
+  --wordmark-tracking:     -0.04em;
+  --wordmark-font:         "Geist", "Inter", system-ui, sans-serif;
+
   /* Max readable width */
   --content-max-width:     56rem;
 
@@ -226,6 +231,15 @@
   opacity: 0.03;
   pointer-events: none;
   z-index: 50;
+}
+
+/* App wordmark — Ojuit brand text */
+.wordmark {
+  font-family: var(--wordmark-font);
+  font-weight: var(--wordmark-weight);
+  letter-spacing: var(--wordmark-tracking);
+  color: var(--foreground);
+  line-height: 1;
 }
 
 /* Monospace numeric display */

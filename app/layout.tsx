@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'ChromaSync - AI Colour Intelligence for Filmmakers',
-  description: 'Professional AI-powered colour intelligence tool for indie filmmakers. Analyse reference frames, get real-time shooting guidance, and correct colour drift in post.',
+  title: 'Ojuit - AI Filmmaking Intelligence',
+  description: 'AI-powered colour intelligence and story development for indie filmmakers. See the story. See the light.',
   generator: 'v0.app',
 }
 
