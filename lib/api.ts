@@ -211,10 +211,9 @@ export async function downloadLut(scene: File, reference: File): Promise<void> {
 
   if (!res.ok) throw new Error("LUT generation failed")
 
-  // Get filename from Content-Disposition header or use fallback
-  const disposition = res.headers.get("content-disposition") ?? ""
-  const match = disposition.match(/filename="?([^"]+)"?/)
-  const filename = match?.[1] ?? "chromasync_correction.cube"
+  // Build filename from the scene file name so the filmmaker knows which LUT is for which scene
+  const sceneBaseName = scene.name.replace(/\.[^/.]+$/, "") // strip extension
+  const filename = `${sceneBaseName}_chromasync.cube`
 
   // Trigger browser download
   const blob = await res.blob()
