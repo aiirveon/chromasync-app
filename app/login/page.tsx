@@ -25,16 +25,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-            <circle cx="18" cy="18" r="16" stroke="var(--accent)" strokeWidth="2" fill="none" />
-            <circle cx="18" cy="18" r="8" stroke="var(--accent)" strokeWidth="1.5" fill="none" />
-            <line x1="18" y1="2" x2="18" y2="10" stroke="var(--accent)" strokeWidth="1.5" />
-            <line x1="18" y1="26" x2="18" y2="34" stroke="var(--accent)" strokeWidth="1.5" />
-            <line x1="2" y1="18" x2="10" y2="18" stroke="var(--accent)" strokeWidth="1.5" />
-            <line x1="26" y1="18" x2="34" y2="18" stroke="var(--accent)" strokeWidth="1.5" />
-          </svg>
-          <span className="text-xl font-semibold text-foreground tracking-wide">ChromaSync</span>
+        <div className="flex items-center justify-center mb-10">
+          <span className="wordmark text-3xl text-foreground">Ojuit</span>
         </div>
         <div className="bg-muted border border-border rounded-xl p-8">
           {!sent ? (
@@ -80,7 +72,7 @@ export default function LoginPage() {
             </div>
           )}
         </div>
-        <p className="text-center text-muted-foreground/50 text-xs mt-6">AI colour intelligence for indie filmmakers</p>
+        <p className="text-center text-muted-foreground/50 text-xs mt-6">See the story. See the light.</p>
       </div>
     </div>
   )
