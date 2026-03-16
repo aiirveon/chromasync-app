@@ -16,6 +16,52 @@ import { StoryDashboard } from "@/components/chromasync/story-dashboard"
 import { type AppMode } from "@/components/chromasync/mode-switcher"
 import { type StoryTab } from "@/components/chromasync/story-sidebar-nav"
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://chromasync-api.onrender.com"
+
+function BetaBanner() {
+  const [apiReady, setApiReady] = useState(false)
+
+  useEffect(() => {
+    fetch(`${API_BASE}/health`)
+      .then(() => setApiReady(true))
+      .catch(() => setApiReady(true))
+  }, [])
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        backgroundColor: apiReady ? "color-mix(in srgb, var(--accent) 8%, transparent)" : "color-mix(in srgb, var(--muted-foreground) 8%, transparent)",
+        borderBottom: "1px solid var(--border)",
+        padding: "0.35rem 1rem",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "0.5rem",
+        fontSize: "0.7rem",
+        color: "var(--muted-foreground)",
+        zIndex: 100,
+        transition: "background-color 0.4s",
+      }}
+    >
+      <span
+        style={{
+          display: "inline-block",
+          width: "6px",
+          height: "6px",
+          borderRadius: "50%",
+          backgroundColor: apiReady ? "var(--accent)" : "var(--muted-foreground)",
+          flexShrink: 0,
+          transition: "background-color 0.4s",
+        }}
+      />
+      {apiReady
+        ? "Beta — AI features are live. Some responses may be slower than usual."
+        : "Beta — warming up the AI engine, first request may take up to 50 seconds."}
+    </div>
+  )
+}
+
 export interface LivePreShootState {
   preview: string | null
   result: PreShootResponse | null
@@ -73,6 +119,7 @@ export default function Home() {
 
   return (
     <div className="app-shell film-grain">
+      <BetaBanner />
       <div className="desktop-only">
         <Sidebar
           activeTab={activeTab}
