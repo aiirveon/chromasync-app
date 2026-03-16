@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   title: 'Ojuit - AI Filmmaking Intelligence',
   description: 'AI-powered colour intelligence and story development for indie filmmakers. See the story. See the light.',
   generator: 'v0.app',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+  },
 }
 
 export const viewport: Viewport = {
