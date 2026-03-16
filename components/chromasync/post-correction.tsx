@@ -93,60 +93,54 @@ export function PostCorrection() {
         <p className="text-muted-foreground mt-1 text-sm">Detect and correct colour drift in your footage</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Reference frame upload zone — fixed height always */}
         <div
-          className="border-2 border-dashed border-border rounded bg-card hover:border-muted-foreground/50 transition-colors cursor-pointer"
+          className="border-2 border-dashed border-border rounded bg-card hover:border-muted-foreground/50 transition-colors cursor-pointer overflow-hidden"
+          style={{ height: "160px" }}
           onClick={() => refInputRef.current?.click()}
         >
           <input ref={refInputRef} type="file" accept="image/*" className="hidden" onChange={onReferenceChange} />
           {reference && referencePreview ? (
-            <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+            <div className="relative w-full h-full">
               <img
                 src={referencePreview}
                 alt="Reference frame"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  borderRadius: "calc(var(--radius) - 2px)",
-                  display: "block",
-                }}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               />
               <div
                 style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 50%)",
-                  borderRadius: "calc(var(--radius) - 2px)",
-                  display: "flex",
-                  alignItems: "flex-end",
-                  padding: "0.6rem 0.75rem",
-                  gap: "0.4rem",
+                  position: "absolute", inset: 0,
+                  background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 55%)",
+                  display: "flex", alignItems: "flex-end",
+                  padding: "0.6rem 0.75rem", gap: "0.4rem",
                 }}
               >
                 <ImageIcon className="w-3.5 h-3.5 text-white/80" style={{ flexShrink: 0 }} />
                 <p className="text-xs text-white/90 truncate" style={{ flex: 1 }}>{reference.name}</p>
-                <p className="text-xs text-white/60 flex-shrink-0">Click to change</p>
+                <p className="text-xs text-white/60 flex-shrink-0">Change</p>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-3">
-                <ImageIcon className="w-6 h-6 text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center h-full gap-2">
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                <ImageIcon className="w-5 h-5 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-foreground mb-1">Reference Frame</p>
+              <p className="text-sm font-medium text-foreground">Reference Frame</p>
               <p className="text-xs text-muted-foreground">Drop or click to browse</p>
             </div>
           )}
         </div>
 
+        {/* Scene frames upload zone — fixed height always */}
         <div
-          className="border-2 border-dashed border-border rounded bg-card hover:border-muted-foreground/50 transition-colors cursor-pointer"
+          className="border-2 border-dashed border-border rounded bg-card hover:border-muted-foreground/50 transition-colors cursor-pointer overflow-hidden"
+          style={{ height: "160px" }}
           onClick={() => scenesInputRef.current?.click()}
         >
           <input ref={scenesInputRef} type="file" accept="image/*" multiple className="hidden" onChange={onScenesChange} />
           {scenes.length > 0 ? (
-            <div className="p-4 space-y-2 max-h-48 overflow-y-auto">
+            <div className="p-3 h-full flex flex-col">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-muted-foreground">{scenes.length} scene{scenes.length > 1 ? "s" : ""} selected</p>
                 <div className="flex items-center gap-1 text-xs text-accent">
@@ -154,24 +148,26 @@ export function PostCorrection() {
                   <span>Add more</span>
                 </div>
               </div>
-              {scenes.map((scene, i) => (
-                <div key={i} className="flex items-center justify-between bg-secondary rounded px-3 py-1.5">
-                  <div className="flex items-center gap-2">
-                    <Film className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-xs text-foreground truncate max-w-[160px]">{scene.name}</span>
+              <div className="flex-1 overflow-y-auto space-y-1">
+                {scenes.map((scene, i) => (
+                  <div key={i} className="flex items-center justify-between bg-secondary rounded px-2 py-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Film className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      <span className="text-xs text-foreground truncate">{scene.name}</span>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); removeScene(i) }} className="text-muted-foreground hover:text-foreground flex-shrink-0 ml-2">
+                      <X className="w-3 h-3" />
+                    </button>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); removeScene(i) }} className="text-muted-foreground hover:text-foreground">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-3">
-                <Film className="w-6 h-6 text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center h-full gap-2">
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                <Film className="w-5 h-5 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-foreground mb-1">Scene Frames</p>
+              <p className="text-sm font-medium text-foreground">Scene Frames</p>
               <p className="text-xs text-muted-foreground">Select multiple images (max 20)</p>
             </div>
           )}
@@ -182,10 +178,13 @@ export function PostCorrection() {
         <div className="p-3 rounded border border-destructive/30 bg-destructive/10 text-sm text-destructive">{error}</div>
       )}
 
-      <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-11" onClick={handleAnalyse} disabled={loading}>
-        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
-        {loading ? "Analysing..." : "Analyse Footage"}
-      </Button>
+      {/* Analyse button — sticky at bottom on mobile, inline on desktop */}
+      <div className="sticky bottom-0 sm:static z-10 sm:z-auto bg-background sm:bg-transparent pt-2 sm:pt-0 pb-2 sm:pb-0">
+        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-11" onClick={handleAnalyse} disabled={loading}>
+          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+          {loading ? "Analysing..." : "Analyse Footage"}
+        </Button>
+      </div>
 
       {result && (
         <>
