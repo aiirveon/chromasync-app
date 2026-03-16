@@ -91,19 +91,25 @@ export function StoryColdOpen({ onBegin, loading = false }: StoryColdOpenProps) 
           style={{
             width: "100%",
             backgroundColor: "transparent",
-            color: "var(--foreground)",
+            color: "var(--muted-foreground)",
             border: "none",
             borderBottom: "1px solid var(--border)",
             borderRadius: 0,
             padding: "0.4rem 0",
-            fontSize: "0.9rem",
+            fontSize: "0.78rem",
             fontFamily: "inherit",
             outline: "none",
             marginBottom: "1.5rem",
-            transition: "border-color 0.15s",
+            transition: "border-color 0.15s, color 0.15s",
           }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)" }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)" }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "var(--accent)"
+            e.currentTarget.style.color = "var(--foreground)"
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "var(--border)"
+            if (!e.currentTarget.value) e.currentTarget.style.color = "var(--muted-foreground)"
+          }}
         />
 
         {/* Textarea */}
