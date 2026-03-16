@@ -111,8 +111,12 @@ export function Sidebar({ activeTab, onTabChange, userEmail, onSignOut, onSessio
 
   return (
     <aside
-      className="fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden"
-      style={{ width: "var(--sidebar-width)" }}
+      className="fixed left-0 bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden"
+      style={{
+        top: "var(--beta-banner-height)",
+        width: "var(--sidebar-width)",
+        height: "calc(100vh - var(--beta-banner-height))",
+      }}
     >
       {/* Logo + mode switcher */}
       <div className="p-4 border-b border-sidebar-border shrink-0 space-y-3">

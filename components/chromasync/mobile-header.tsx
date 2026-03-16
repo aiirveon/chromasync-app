@@ -9,8 +9,11 @@ interface MobileHeaderProps {
 export function MobileHeader({ currentModule }: MobileHeaderProps) {
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 border-b border-border bg-sidebar"
-      style={{ height: "var(--mobile-header-height)" }}
+      className="fixed left-0 right-0 z-40 flex items-center justify-between px-4 border-b border-border bg-sidebar"
+      style={{
+        top: "var(--beta-banner-height)",
+        height: "var(--mobile-header-height)",
+      }}
     >
       {/* Wordmark */}
       <span className="wordmark text-base text-foreground">Ojuit</span>

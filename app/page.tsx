@@ -30,8 +30,12 @@ function BetaBanner() {
   return (
     <div
       style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
         width: "100%",
-        backgroundColor: apiReady ? "color-mix(in srgb, var(--accent) 8%, transparent)" : "color-mix(in srgb, var(--muted-foreground) 8%, transparent)",
+        backgroundColor: apiReady ? "color-mix(in srgb, var(--accent) 8%, var(--background))" : "color-mix(in srgb, var(--muted-foreground) 8%, var(--background))",
         borderBottom: "1px solid var(--border)",
         padding: "0.35rem 1rem",
         display: "flex",
@@ -40,7 +44,7 @@ function BetaBanner() {
         gap: "0.5rem",
         fontSize: "0.7rem",
         color: "var(--muted-foreground)",
-        zIndex: 100,
+        zIndex: 9999,
         transition: "background-color 0.4s",
       }}
     >

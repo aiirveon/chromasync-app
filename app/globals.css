@@ -104,6 +104,9 @@
   --wordmark-tracking:     -0.04em;
   --wordmark-font:         "Geist", "Inter", system-ui, sans-serif;
 
+  /* Beta banner height — used to offset fixed elements below it */
+  --beta-banner-height:    28px;
+
   /* Max readable width */
   --content-max-width:     56rem;
 
@@ -303,7 +306,7 @@
 .main-content {
   min-height: 100dvh;
   margin-left: 0;
-  padding-top: var(--mobile-header-height);
+  padding-top: calc(var(--mobile-header-height) + var(--beta-banner-height));
   padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
 }
 
@@ -317,7 +320,7 @@
 @media (min-width: 768px) {
   .main-content {
     margin-left: var(--sidebar-width);
-    padding-top: 0;
+    padding-top: var(--beta-banner-height);
     padding-bottom: var(--status-bar-height);
   }
   .desktop-only { display: block !important; }
@@ -350,7 +353,7 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: calc(var(--mobile-header-height) + 1.25rem) 1rem calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 1rem);
+  padding: calc(var(--mobile-header-height) + var(--beta-banner-height) + 1.25rem) 1rem calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 1rem);
   background-color: var(--background);
 }
 
