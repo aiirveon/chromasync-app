@@ -59,9 +59,12 @@ function BetaBanner() {
           transition: "background-color 0.4s",
         }}
       />
-      {apiReady
-        ? "Beta — AI features are live. Some responses may be slower than usual."
-        : "Beta — warming up the AI engine, first request may take up to 50 seconds."}
+      <span className="hidden sm:inline">
+        {apiReady ? "Beta — AI features live. Responses may be slower than usual." : "Beta — warming up, first request may take up to 50 seconds."}
+      </span>
+      <span className="sm:hidden">
+        {apiReady ? "Beta — AI live" : "Beta — warming up..."}
+      </span>
     </div>
   )
 }
