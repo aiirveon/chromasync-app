@@ -93,7 +93,7 @@ export function PostCorrection() {
         <p className="text-muted-foreground mt-1 text-sm">Detect and correct colour drift in your footage</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div
           className="border-2 border-dashed border-border rounded bg-card hover:border-muted-foreground/50 transition-colors cursor-pointer"
           onClick={() => refInputRef.current?.click()}
@@ -194,9 +194,45 @@ export function PostCorrection() {
               <CardTitle className="text-base font-medium">Scene Analysis</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {/* Horizontal scroll on mobile for the data table */}
-              <div className="overflow-x-auto">
-              <div className="divide-y divide-border min-w-[480px]">
+              {/* Mobile: card per scene. Desktop: data table */}
+              <div className="block sm:hidden divide-y divide-border">
+                {result.scenes.map((scene) => (
+                  <div key={scene.scene_number} className="p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="mono-value text-xs text-muted-foreground">SC{String(scene.scene_number).padStart(3, "0")}</span>
+                      {getStatusBadge(scene.status)}
+                    </div>
+                    <p className="text-sm text-foreground truncate">{scene.scene_name}</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Temp</p>
+                        <p className="mono-value text-sm text-foreground">{scene.temperature}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Exposure</p>
+                        <p className="mono-value text-sm text-foreground">{scene.exposure}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">ΔE Drift</p>
+                        <p className={`mono-value text-sm font-medium ${getDeltaColor(scene.delta_e)}`}>{scene.delta_e}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDownloadLut(scene.scene_number - 1)}
+                      disabled={lutLoading === scene.scene_number - 1}
+                      className="flex items-center gap-1.5 text-xs text-accent border border-border rounded px-3 py-1.5 w-full justify-center"
+                    >
+                      {lutLoading === scene.scene_number - 1
+                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                        : <Download className="w-3 h-3" />
+                      }
+                      {lutLoading === scene.scene_number - 1 ? "Generating..." : "Download .cube LUT"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden sm:block overflow-x-auto">
+              <div className="divide-y divide-border min-w-[560px]">
                 <div className="grid grid-cols-7 gap-3 px-4 py-2 text-xs text-muted-foreground bg-secondary/50">
                   <div>Scene</div><div>Name</div><div>Temp</div><div>Exposure</div><div>ΔE Drift</div><div>Status</div><div>LUT</div>
                 </div>
@@ -251,7 +287,7 @@ export function PostCorrection() {
               <CardTitle className="text-base font-medium">Correction Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {[
                   { label: "Scenes Analysed", value: result.summary.total_scenes.toString(), delta: -1 },
                   { label: "Avg ΔE Drift", value: result.summary.avg_delta_e.toString(), delta: result.summary.avg_delta_e },
